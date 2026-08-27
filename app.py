@@ -13,6 +13,7 @@ st.set_page_config(
 )
 
 API_KEY = st.secrets.get("GEMINI_API_KEY", None)
+ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", None)
 
 # --- LİMİT AYARLARI ---
 MAX_INPUT_CHARS = 3000
@@ -21,7 +22,6 @@ SESSION_LIMIT = 5
 DAILY_GLOBAL_LIMIT = 200
 USAGE_FILE = "usage_log.json"
 
-# --- BRANŞA ÖZEL KONTROL LİSTELERİ ---
 SPECIALTIES = {
     "Acil Servis": "Triyaj kaydı, vital bulgular, ayırıcı tanı, taburculuk sonrası uyarı talimatları, tekrar başvuru güvencesi",
     "Genel Cerrahi": "Aydınlatılmış onam detayı, ameliyat öncesi/sonrası bulgular, komplikasyon riski bildirimi, post-op takip planı",
@@ -31,22 +31,60 @@ SPECIALTIES = {
     "Diğer / Genel": "Genel anamnez, muayene bulguları, tedavi planı, hasta bilgilendirme ve onam kaydı"
 }
 
-# --- GÜNLÜK GLOBAL KULLANIM SAYACI ---
-def get_daily_usage():
-    today = str(date.today())
+KVKK_METNI = """
+**Veri Sorumlusu:** SafeEpikriz, KVKK kapsamında veri sorumlusu sıfatıyla hareket eder.
+
+**İşlenen Veriler:** HBYS'den kopyalanan muayene/epikriz notları; bu notlar özel nitelikli
+kişisel veri (sağlık verisi) içerebilir.
+
+**Maskeleme:** Girilen metin, sunucuya/yapay zekaya ulaşmadan ÖNCE yerel olarak taranır;
+T.C. Kimlik No, telefon ve isim gibi doğrudan kimliklendirici veriler maskelenir.
+
+**Saklama:** Ham (maskelenmemiş) metin kalıcı olarak saklanmaz veya loglanmaz. Analiz
+sonuçları yalnızca aktif tarayıcı oturumunuzda tutulur.
+
+**Aktarım:** Maskelenmiş metin, analiz için Google Gemini API'ye iletilir. Ücretli API
+katmanında işlenen veriler Google tarafından model eğitiminde kullanılmaz.
+
+**Haklarınız:** KVKK Madde 11 kapsamındaki haklarınız için bizimle iletişime geçebilirsiniz.
+"""
+
+KULLANIM_SARTLARI = """
+**SafeEpikriz bir hukuk bürosu, avukat veya tıbbi karar destek sistemi DEĞİLDİR.**
+
+Platform tarafından üretilen analiz ve öneriler yapay zeka tarafından otomatik üretilir;
+hatalı, eksik veya güncel olmayan bilgi içerebilir. Platform'un kullanımı, herhangi bir
+malpraktis davasında hekimin hukuki sorumluluğunu ortadan kaldırmaz veya azaltmaz —
+nihai klinik ve hukuki sorumluluk tamamen hekime/kuruma aittir.
+
+Kullanıcı, girdiği metinlerin paylaşmaya yetkili olduğu, mümkün olduğunca anonimleştirilmiş
+içerikler olduğunu ve üretilen önerileri kendi profesyonel değerlendirmesinden geçirmeden
+doğrudan resmi kayıtlara işlemeyeceğini kabul eder.
+
+Platform "olduğu gibi" sunulur, doğruluk veya güncellik garantisi verilmez. İşletmeci,
+sorumluluk kabul etmez ve hizmeti önceden haber vermeksizin değiştirme/sonlandırma hakkını
+saklı tutar.
+"""
+
+# --- KULLANIM SAYACI (JSON tabanlı, harici servise ihtiyaç yok) ---
+def load_usage_data():
     if os.path.exists(USAGE_FILE):
         with open(USAGE_FILE, "r") as f:
-            data = json.load(f)
-    else:
-        data = {}
+            return json.load(f)
+    return {}
+
+def get_daily_usage():
+    today = str(date.today())
+    data = load_usage_data()
     return data.get(today, 0), data
 
 def increment_daily_usage(data):
     today = str(date.today())
     data[today] = data.get(today, 0) + 1
-    data = {today: data[today]}
+    # Son 30 günü tut, dosya şişmesin
+    trimmed = dict(list(data.items())[-30:])
     with open(USAGE_FILE, "w") as f:
-        json.dump(data, f)
+        json.dump(trimmed, f)
 
 # --- KVKK VE PII MASKELEME MOTORU ---
 def mask_kvkk_data(text: str) -> tuple[str, bool]:
@@ -79,21 +117,44 @@ def score_color(score_text: str) -> str:
         return "🟢"
     elif score >= 50:
         return "🟡"
-    else:
-        return "🔴"
+    return "🔴"
+
+# --- GİZLİ ADMİN PANELİ (?admin=1 ile erişilir, şifre gerektirir) ---
+query_params = st.query_params
+if query_params.get("admin") == "1":
+    st.title("🔐 SafeEpikriz Admin Paneli")
+    pw = st.text_input("Admin şifresi", type="password")
+    if ADMIN_PASSWORD and pw == ADMIN_PASSWORD:
+        data = load_usage_data()
+        st.success("Giriş başarılı.")
+        st.write("**Son 30 günün kullanım verisi:**")
+        if data:
+            st.bar_chart(data)
+            today_count, _ = get_daily_usage()
+            st.metric("Bugünkü analiz sayısı", today_count, delta=f"Limit: {DAILY_GLOBAL_LIMIT}")
+        else:
+            st.info("Henüz kullanım verisi yok.")
+    elif pw:
+        st.error("Yanlış şifre.")
+    st.stop()  # Admin modunda ana uygulamayı gösterme
 
 # --- BAŞLIK ---
 st.title("⚕️ SafeEpikriz")
 st.subheader("HBYS Muayene Notu ve Epikriz Risk Taraması")
 
-# --- NEDEN SAFEEPIKRIZ? ---
 with st.expander("💡 Neden genel bir yapay zekaya değil, SafeEpikriz'e yapıştırmalısınız?"):
     st.markdown("""
-    - **🔒 KVKK Güvencesi:** Hasta adı, T.C. No, telefon gibi kişisel veriler sunucuya ulaşmadan yerel olarak temizlenir. Genel AI sohbet arayüzlerine hasta verisi yapıştırmak ayrı bir KVKK riski taşır.
-    - **🩺 Branşa Özel Analiz:** Checklist'ler branşınıza göre şekillenir (Acil, Cerrahi, Dahiliye vb.), genel bir AI'ın bilmediği detayları kontrol eder.
+    - **🔒 KVKK Güvencesi:** Hasta adı, T.C. No, telefon gibi kişisel veriler sunucuya ulaşmadan yerel olarak temizlenir.
+    - **🩺 Branşa Özel Analiz:** Checklist'ler branşınıza göre şekillenir.
     - **📋 Oturum Geçmişi:** Aynı oturumda yaptığınız analizleri geri dönüp görebilirsiniz.
     - **⚡ Hazır Format:** Çıktı doğrudan HBYS'ye yapıştırılabilir şekilde tasarlanmıştır.
     """)
+
+with st.expander("📜 KVKK Aydınlatma Metni"):
+    st.markdown(KVKK_METNI)
+
+with st.expander("📄 Kullanım Şartları ve Sorumluluk Reddi"):
+    st.markdown(KULLANIM_SARTLARI)
 
 st.write("HBYS sisteminize yazdığınız notu aşağıya yapıştırın. Sistem adli riskleri tarasın, **puanlasın** ve **nasıl yazılması gerektiğini** sunsun.")
 
@@ -105,13 +166,11 @@ with st.sidebar:
     st.success("🔒 **KVKK Garantisi:** Metin içindeki T.C. No, İsim ve Tel bilgileri sunucuya/AI modeline ulaşmadan yerel olarak otomasyonla temizlenir.")
     st.caption(f"Oturum limitiniz: {st.session_state.get('usage_count', 0)}/{SESSION_LIMIT}")
 
-# --- OTURUM DURUMU ---
 if "usage_count" not in st.session_state:
     st.session_state.usage_count = 0
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# --- BRANŞ SEÇİMİ ---
 specialty = st.selectbox("Branşınızı seçin:", list(SPECIALTIES.keys()))
 
 input_text = st.text_area(
@@ -121,7 +180,6 @@ input_text = st.text_area(
     placeholder="Örn: Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda ağrı ile geldi..."
 )
 
-# --- SORUMLULUK REDDİ ONAYI ---
 terms_ok = st.checkbox(
     "SafeEpikriz'in bir hukuki danışmanlık hizmeti olmadığını, yapay zeka çıktılarının "
     "bilgilendirme amaçlı olduğunu ve nihai sorumluluğun hekime/kuruma ait olduğunu okudum, kabul ediyorum."
@@ -150,7 +208,7 @@ if analyze_btn:
             clean_text, is_masked = mask_kvkk_data(stripped)
 
             if is_masked:
-                st.info("🛡️ **KVKK Koruması Devrede:** Metin içerisindeki hassas kişisel veriler (T.C. No, isim vb.) tespit edildi ve temizlenerek yapay zekaya iletildi.")
+                st.info("🛡️ **KVKK Koruması Devrede:** Metin içerisindeki hassas kişisel veriler tespit edildi ve temizlenerek yapay zekaya iletildi.")
 
             branch_focus = SPECIALTIES[specialty]
 
@@ -186,10 +244,7 @@ if analyze_btn:
                     lütfen geçerli bir muayene/epikriz notu girin." yaz ve başka hiçbir şey ekleme.
                     """
 
-                    response = model.generate_content(
-                        prompt,
-                        request_options={"timeout": 30}
-                    )
+                    response = model.generate_content(prompt, request_options={"timeout": 30})
 
                     if not response.text or not response.text.strip():
                         st.error("Yapay zekadan boş yanıt alındı. Lütfen tekrar deneyin.")
@@ -214,7 +269,6 @@ if analyze_btn:
                     st.error("Analiz sırasında bir sorun oluştu. Lütfen birkaç saniye sonra tekrar deneyin.")
                     print(f"[SafeEpikriz HATA] {str(e)}")
 
-# --- OTURUM GEÇMİŞİ ---
 if st.session_state.history:
     with st.expander(f"📋 Bu Oturumdaki Geçmiş Analizleriniz ({len(st.session_state.history)})"):
         for item in reversed(st.session_state.history):
@@ -222,12 +276,9 @@ if st.session_state.history:
             st.markdown(item["result"])
             st.markdown("---")
 
-# --- YASAL UYARI ---
 st.markdown("---")
 st.caption(
     "⚠️ SafeEpikriz bir hukuki danışmanlık hizmeti değildir, avukatlık faaliyeti yerine geçmez. "
-    "Sistem yapay zeka tarafından üretilen bilgilendirme amaçlı önerilerde bulunur; kesin hukuki "
-    "değerlendirme için bir avukata danışılması, nihai tıbbi ve hukuki sorumluluğun ise hekim/kuruma "
-    "ait olduğu unutulmamalıdır. Bu metin, gerçek verilerle ve/veya patient hasta bilgisi girilmeden "
-    "önce KVKK aydınlatma metnini okumanız önerilir."
+    "Sistem yapay zeka tarafından üretilen bilgilendirme amaçlı önerilerde bulunur; nihai tıbbi ve "
+    "hukuki sorumluluk hekim/kuruma aittir."
 )
