@@ -14,14 +14,10 @@ API_KEY = st.secrets.get("GEMINI_API_KEY", None)
 
 # --- KVKK VE PII MASKELEME MOTORU ---
 def mask_kvkk_data(text: str) -> tuple[str, bool]:
-    """
-    Metin içerisindeki T.C. Kimlik No, İsim-Soyisim, Telefon ve Tarih bilgilerini
-    yapay zekaya gönderilmeden önce [MASKELLENMİŞ_VERİ] etiketiyle temizler.
-    """
     masked_text = text
     data_masked = False
 
-    # 1. T.C. Kimlik No Maskeleme (11 Haneli Sayılar)
+    # 1. T.C. Kimlik No Maskeleme
     tc_pattern = r'\b[1-9]\d{10}\b'
     if re.search(tc_pattern, masked_text):
         masked_text = re.sub(tc_pattern, '[TC_KİMLİK_NO_GİZLENDİ]', masked_text)
@@ -33,7 +29,7 @@ def mask_kvkk_data(text: str) -> tuple[str, bool]:
         masked_text = re.sub(phone_pattern, '[TELEFON_GİZLENDİ]', masked_text)
         data_masked = True
 
-    # 3. Sayın/Hasta/Dr. Sonrası Muhtemel İsim Maskeleme
+    # 3. İsim/Unvan Maskeleme
     name_pattern = r'(Sayın|Hasta|Dr\.|Dr|Uzman)\s+([A-ZÇĞİÖŞÜa-zçğıöşü]+)\s+([A-ZÇĞİÖŞÜa-zçğıöşü]+)'
     if re.search(name_pattern, masked_text):
         masked_text = re.sub(name_pattern, r'\1 [HASTA/PERSONEL_İSMİ_GİZLENDİ]', masked_text)
@@ -58,12 +54,12 @@ with st.sidebar:
 input_text = st.text_area(
     "HBYS'den Kopyaladığınız Metni Buraya Yapıştırın:",
     height=180,
-    placeholder="Örn: Hasta Ahsen Yılmaz (TC: 12345678901) sağ alt kadranda ağrı ile geldi..."
+    placeholder="Örn: Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda ağrı ile geldi..."
 )
 
 analyze_btn = st.button("🔍 Risk Analizi Yap ve Puanla", type="primary", use_container_width=True)
 
-# --- ANALİZ MOTORU ---
+# --- ANALİZ MOTORU (KULLANDIKÇA ÖDE / ULTRA UCUZ FLASH MODEL) ---
 if analyze_btn:
     if not input_text.strip():
         st.warning("Lütfen önce HBYS'den kopyaladığınız bir metni yapıştırın.")
@@ -80,28 +76,19 @@ if analyze_btn:
             try:
                 genai.configure(api_key=API_KEY)
                 
-                # Dinamik model seçimi
-                available_models = []
-                try:
-                    for m in genai.list_models():
-                        if 'generateContent' in m.supported_generation_methods:
-                            available_models.append(m.name)
-                except Exception:
-                    pass
-
-                selected_model_name = None
-                for target in ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash', 'gemini-pro']:
-                    for full_name in available_models:
-                        if target in full_name:
-                            selected_model_name = full_name
-                            break
-                    if selected_model_name:
+                # Google API'nin en güncel ucuz Flash modelleri sırası
+                model_names = ['gemini-3.6-flash', 'gemini-flash', 'gemini-1.5-flash', 'gemini-pro']
+                model = None
+                
+                for name in model_names:
+                    try:
+                        model = genai.GenerativeModel(name)
                         break
+                    except Exception:
+                        continue
 
-                if not selected_model_name:
-                    selected_model_name = 'gemini-1.5-flash'
-
-                model = genai.GenerativeModel(selected_model_name)
+                if not model:
+                    model = genai.GenerativeModel('gemini-1.5-flash')
 
                 prompt = f"""
                 Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
