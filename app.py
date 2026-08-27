@@ -59,7 +59,7 @@ input_text = st.text_area(
 
 analyze_btn = st.button("🔍 Risk Analizi Yap ve Puanla", type="primary", use_container_width=True)
 
-# --- ANALİZ MOTORU (%100 ÜCRETSİZ & KARARLI KATMAN) ---
+# --- ANALİZ MOTORU (KESİN VE HATA SIZDIRMAZ MODEL ÇAĞIRICI) ---
 if analyze_btn:
     if not input_text.strip():
         st.warning("Lütfen önce HBYS'den kopyaladığınız bir metni yapıştırın.")
@@ -76,8 +76,17 @@ if analyze_btn:
             try:
                 genai.configure(api_key=API_KEY)
                 
-                # Ücretsiz katmanda en kararlı çalışan doğrudan model ismi
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                # API üzerindeki tüm aktif modelleri listeleyip metin üretimi destekleyen İLK çalışan modeli otomatik seçer
+                active_model_name = None
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        active_model_name = m.name
+                        break
+                
+                if not active_model_name:
+                    active_model_name = 'models/gemini-1.5-flash'
+
+                model = genai.GenerativeModel(active_model_name)
 
                 prompt = f"""
                 Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
