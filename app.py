@@ -77,17 +77,7 @@ if analyze_btn:
                 genai.configure(api_key=API_KEY)
                 
                 # API üzerindeki tüm aktif modelleri listeleyip metin üretimi destekleyen İLK çalışan modeli otomatik seçer
-                active_model_name = None
-                for m in genai.list_models():
-                    if 'generateContent' in m.supported_generation_methods:
-                        active_model_name = m.name
-                        break
-                
-                if not active_model_name:
-                    active_model_name = 'models/gemini-1.5-flash'
-
-                model = genai.GenerativeModel(active_model_name)
-
+               model = genai.GenerativeModel("gemini-3.7-flash")
                 prompt = f"""
                 Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
                 Aşağıdaki hekim notunu T.C. Sağlık Hukuku ve Yargıtay emsal kararları açısından incele:
