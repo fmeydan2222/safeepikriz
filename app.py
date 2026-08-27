@@ -59,7 +59,7 @@ input_text = st.text_area(
 
 analyze_btn = st.button("🔍 Risk Analizi Yap ve Puanla", type="primary", use_container_width=True)
 
-# --- ANALİZ MOTORU (KULLANDIKÇA ÖDE / ULTRA UCUZ FLASH MODEL) ---
+# --- ANALİZ MOTORU (%100 ÜCRETSİZ & KARARLI KATMAN) ---
 if analyze_btn:
     if not input_text.strip():
         st.warning("Lütfen önce HBYS'den kopyaladığınız bir metni yapıştırın.")
@@ -76,19 +76,8 @@ if analyze_btn:
             try:
                 genai.configure(api_key=API_KEY)
                 
-                # Google API'nin en güncel ucuz Flash modelleri sırası
-                model_names = ['gemini-3.6-flash', 'gemini-flash', 'gemini-1.5-flash', 'gemini-pro']
-                model = None
-                
-                for name in model_names:
-                    try:
-                        model = genai.GenerativeModel(name)
-                        break
-                    except Exception:
-                        continue
-
-                if not model:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                # Ücretsiz katmanda en kararlı çalışan doğrudan model ismi
+                model = genai.GenerativeModel('gemini-1.5-flash')
 
                 prompt = f"""
                 Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
