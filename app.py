@@ -8,16 +8,19 @@ st.set_page_config(
     layout="centered"
 )
 
+# --- SUNUCU DÜZEYİNDE API KEY KONTROLÜ ---
+API_KEY = st.secrets.get("GEMINI_API_KEY", None)
+
 # --- BAŞLIK VE AÇIKLAMA ---
 st.title("⚕️ SafeEpikriz")
 st.subheader("HBYS Muayene Notu ve Epikriz Risk Taraması")
 st.write("HBYS sisteminize yazdığınız notu aşağıya yapıştırın. Sistem adli riskleri tarasın, **puanlasın** ve **nasıl yazılması gerektiğini** sunsun.")
 
-# --- YAN MENÜ (AYARLAR VE KVKK) ---
+# --- YAN MENÜ (KVKK VE BİLGİ) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3063/3063176.png", width=60)
     st.title("SafeEpikriz AI")
-    api_key = st.text_input("Google API Key:", type="password")
+    st.info("Hekimler için Hukuki Risk Analiz ve Epikriz İyileştirme Platformu")
     st.markdown("---")
     st.success("🔒 **KVKK Garantisi:** Metin içindeki kişisel veriler yapay zekaya gitmeden korunur.")
 
@@ -30,24 +33,40 @@ input_text = st.text_area(
 
 analyze_btn = st.button("🔍 Risk Analizi Yap ve Puanla", type="primary", use_container_width=True)
 
-# --- ANALİZ MOTORU (FLASH DÜZEYİ) ---
+# --- ANALİZ MOTORU ---
 if analyze_btn:
     if not input_text.strip():
         st.warning("Lütfen önce HBYS'den kopyaladığınız bir metni yapıştırın.")
-    elif not api_key:
-        st.error("Lütfen sol menüden API anahtarınızı giriniz.")
+    elif not API_KEY:
+        st.error("Sistem yapılandırma hatası: Sunucu API anahtarı bulunamadı.")
     else:
         with st.spinner("Yargıtay ve Danıştay emsal kararlarına göre analiz ediliyor..."):
             try:
-                genai.configure(api_key=api_key)
+                genai.configure(api_key=API_KEY)
                 
-                # Doğrudan Yüksek Hızlı ve Düşük Maliyetli Flash Modeller
+                # Dinamik model seçimi
+                available_models = []
                 try:
-                    model = genai.GenerativeModel('gemini-2.5-flash')
+                    for m in genai.list_models():
+                        if 'generateContent' in m.supported_generation_methods:
+                            available_models.append(m.name)
                 except Exception:
-                    model = genai.GenerativeModel('gemini-1.5-flash')
+                    pass
 
-                # TOKEN VE COST OPTİMİZE PROMPT
+                selected_model_name = None
+                for target in ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-flash', 'gemini-pro']:
+                    for full_name in available_models:
+                        if target in full_name:
+                            selected_model_name = full_name
+                            break
+                    if selected_model_name:
+                        break
+
+                if not selected_model_name:
+                    selected_model_name = 'gemini-1.5-flash'
+
+                model = genai.GenerativeModel(selected_model_name)
+
                 prompt = f"""
                 Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
                 Aşağıdaki hekim notunu T.C. Sağlık Hukuku ve Yargıtay emsal kararları açısından incele:
