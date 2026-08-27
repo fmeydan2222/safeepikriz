@@ -237,7 +237,7 @@ if analyze_btn:
                     PUAN: [0-100] — [max 15 kelimelik gerekçe]
                     🔴 KRİTİK EKSİKLER: [en fazla 3 madde, her biri max 12 kelime]
                     🟡 GELİŞTİRME ALANLARI: [en fazla 2 madde, her biri max 12 kelime]
-                    ✍️ REVİZE METİN: [HBYS'ye yapıştırılabilir, 3-5 cümlelik kusursuz hukuki not]
+                    📋 ÖRNEK / İDEAL METİN ŞABLONU: [Gelecek vakalarda yol gösterici, 3-5 cümlelik eksiksiz örnek hukuki kayıt şablonu]
 
                     Kritik eksik yoksa "Kritik eksik tespit edilmedi" yaz, madde uydurma.
                     Not metin tıbbi bir içerik değilse, sadece "Bu metin bir hekim notu gibi görünmüyor,
