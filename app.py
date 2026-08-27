@@ -76,19 +76,22 @@ if analyze_btn:
             try:
                 genai.configure(api_key=API_KEY)
 
-                model = genai.GenerativeModel("gemini-3.7-flash")
+                model = genai.GenerativeModel("gemini-3.5-flash-lite")
 
                 prompt = f"""
-                Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
-                Aşağıdaki hekim notunu T.C. Sağlık Hukuku ve Yargıtay emsal kararları açısından incele:
+                Sen T.C. Sağlık Hukuku ve Malpraktis alanında uzman bir Tıp Hukukçususun.
+                Aşağıdaki hekim notunu incele ve SADECE aşağıdaki formatta, kısa ve net cevap ver.
+                Her madde en fazla belirtilen kelime/cümle sınırında olsun, gereksiz açıklama yapma.
 
                 Girilen Tıbbi Metin: "{clean_text}"
 
-                Şu formatta net ve kısa bir rapor sun:
-                1. 🏆 **HUKUKİ DAYANIKLILIK PUANI:** (0-100 arası puan ve 1 cümlelik gerekçe).
-                2. 🔴 **KRİTİK EKSİKLER VE MALPRAKTİS RİSKLERİ:** (Olası bir davada hekim aleyhine işleyecek eksikler: vital bulgu, aydınlatılmış onam, taburculuk talimatı vb.).
-                3. 🟡 **UYARI VE GELİŞTİRME ALANLARI:** (Notu hukuki olarak güçlendirecek noktalar).
-                4. ✍️ **OLMASI GEREKEN KORUYUCU REVİZE METİN:** (Hekimin HBYS'ye doğrudan yapıştırabileceği kusursuz hukuki metin).
+                FORMAT (bu sınırlara kesinlikle uy):
+                🏆 PUAN: [0-100] — [max 15 kelimelik gerekçe]
+                🔴 KRİTİK EKSİKLER: [en fazla 3 madde, her biri max 12 kelime]
+                🟡 GELİŞTİRME ALANLARI: [en fazla 2 madde, her biri max 12 kelime]
+                ✍️ REVİZE METİN: [HBYS'ye yapıştırılabilir, 3-5 cümlelik kusursuz hukuki not]
+
+                Kritik eksik yoksa "Kritik eksik tespit edilmedi" yaz, madde uydurma.
                 """
 
                 response = model.generate_content(prompt)
