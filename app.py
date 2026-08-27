@@ -59,7 +59,7 @@ input_text = st.text_area(
 
 analyze_btn = st.button("🔍 Risk Analizi Yap ve Puanla", type="primary", use_container_width=True)
 
-# --- ANALİZ MOTORU (KESİN VE HATA SIZDIRMAZ MODEL ÇAĞIRICI) ---
+# --- ANALİZ MOTORU ---
 if analyze_btn:
     if not input_text.strip():
         st.warning("Lütfen önce HBYS'den kopyaladığınız bir metni yapıştırın.")
@@ -68,16 +68,16 @@ if analyze_btn:
     else:
         # KVKK Maskeleme İşlemi
         clean_text, is_masked = mask_kvkk_data(input_text)
-        
+
         if is_masked:
             st.info("🛡️ **KVKK Koruması Devrede:** Metin içerisindeki hassas kişisel veriler (T.C. No, isim vb.) tespit edildi ve temizlenerek yapay zekaya iletildi.")
 
         with st.spinner("Yargıtay ve Danıştay emsal kararlarına göre analiz ediliyor..."):
             try:
                 genai.configure(api_key=API_KEY)
-                
-                # API üzerindeki tüm aktif modelleri listeleyip metin üretimi destekleyen İLK çalışan modeli otomatik seçer
-               model = genai.GenerativeModel("gemini-3.7-flash")
+
+                model = genai.GenerativeModel("gemini-3.7-flash")
+
                 prompt = f"""
                 Sen T.C. Sağlık Mevzuatı ve Malpraktis Hukuku alanında uzmanlaşmış bir Tıp Hukukçusu ve Başhekimsin.
                 Aşağıdaki hekim notunu T.C. Sağlık Hukuku ve Yargıtay emsal kararları açısından incele:
@@ -90,12 +90,12 @@ if analyze_btn:
                 3. 🟡 **UYARI VE GELİŞTİRME ALANLARI:** (Notu hukuki olarak güçlendirecek noktalar).
                 4. ✍️ **OLMASI GEREKEN KORUYUCU REVİZE METİN:** (Hekimin HBYS'ye doğrudan yapıştırabileceği kusursuz hukuki metin).
                 """
-                
+
                 response = model.generate_content(prompt)
-                
+
                 st.success("Analiz Tamamlandı!")
                 st.markdown("---")
                 st.markdown(response.text)
-                
+
             except Exception as e:
                 st.error(f"Bir hata oluştu: {str(e)}")
