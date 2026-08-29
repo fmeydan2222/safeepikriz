@@ -30,8 +30,8 @@ div[data-testid="stStatusWidget"] {visibility: hidden; height: 0%; position: fix
 """
 st.markdown(HIDE_STREAMLIT_STYLE, unsafe_allow_html=True)
 
-API_KEY = st.secrets.get("GEMINI_API_KEY", None)
-ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD", None)
+API_KEY = st.secrets.get("GEMINI_API_KEY")
+ADMIN_PASSWORD = st.secrets.get("ADMIN_PASSWORD")
 
 # --- LİMİT AYARLARI ---
 MAX_INPUT_CHARS = 3000
