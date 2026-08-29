@@ -12,15 +12,20 @@ st.set_page_config(
     layout="centered"
 )
 
-# --- STREAMLIT MARKA UNSURLARINI GİZLE (menü, footer) ---
-# Not: Bu, Streamlit'in KENDİ ekleyeceği "Made with Streamlit" footer'ını ve
-# sağ üst hamburger menüsünü gizler. Community Cloud'un platform seviyesinde
-# eklediği "Created by fmeydan2222" toolbar rozetini GİZLEMEZ — o ayrı bir
-# sistem, sadece barındırmayı değiştirerek (örn. Render) kaybolur.
+# --- STREAMLIT MARKA UNSURLARINI GİZLE (menü, footer, üst toolbar/GitHub/Fork) ---
+# Not: Bu blok, uygulamanın KENDİ DOM'unun içindeki her şeyi (hamburger menü,
+# footer, sağ üstteki GitHub/Fork/Share ikon çubuğu) gizler. Ancak Community
+# Cloud'un uygulamanın DIŞINDA enjekte ettiği sağ-alt "Hosted with Streamlit"
+# rozetini GİZLEMEZ — o platform seviyesinde, sadece barındırmayı değiştirerek
+# (örn. Render) kaybolur.
 HIDE_STREAMLIT_STYLE = """
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+header {visibility: hidden;}
+div[data-testid="stToolbar"] {visibility: hidden; height: 0%; position: fixed;}
+div[data-testid="stDecoration"] {visibility: hidden; height: 0%; position: fixed;}
+div[data-testid="stStatusWidget"] {visibility: hidden; height: 0%; position: fixed;}
 </style>
 """
 st.markdown(HIDE_STREAMLIT_STYLE, unsafe_allow_html=True)
@@ -79,7 +84,6 @@ sorumluluk kabul etmez ve hizmeti önceden haber vermeksizin değiştirme/sonlan
 saklı tutar.
 """
 
-# --- KULLANIM SAYACI (JSON tabanlı, harici servise ihtiyaç yok) ---
 def load_usage_data():
     if os.path.exists(USAGE_FILE):
         with open(USAGE_FILE, "r") as f:
@@ -98,7 +102,6 @@ def increment_daily_usage(data):
     with open(USAGE_FILE, "w") as f:
         json.dump(trimmed, f)
 
-# --- KVKK VE PII MASKELEME MOTORU ---
 def mask_kvkk_data(text: str) -> tuple[str, bool]:
     masked_text = text
     data_masked = False
@@ -131,7 +134,6 @@ def score_color(score_text: str) -> str:
         return "🟡"
     return "🔴"
 
-# --- GİZLİ ADMİN PANELİ (?admin=1 ile erişilir, şifre gerektirir) ---
 query_params = st.query_params
 if query_params.get("admin") == "1":
     st.title("🔐 SafeEpikriz Admin Paneli")
@@ -150,7 +152,6 @@ if query_params.get("admin") == "1":
         st.error("Yanlış şifre.")
     st.stop()
 
-# --- BAŞLIK ---
 st.title("⚕️ SafeEpikriz")
 st.subheader("Medikolegal Risk Denetçisi ve Güvenlik Kalkanı")
 
