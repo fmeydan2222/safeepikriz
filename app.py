@@ -3,7 +3,7 @@ import streamlit as st
 # 1. Sayfa Yapılandırması
 st.set_page_config(
     page_title="SafeEpikriz AI | Medikolegal Risk Denetimi",
-    page_icon="⚕️",
+    page_icon="🛡️",
     layout="centered",
     initial_sidebar_state="expanded"
 )
@@ -12,7 +12,7 @@ st.set_page_config(
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 
-# 2. Özel CSS: ChatGPT & Gemini Mat Koyu Teması
+# 2. Özel CSS: ChatGPT & Gemini Tarzı Mat Koyu ve Monokrom Teması
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -21,7 +21,7 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* ChatGPT Mat Koyu Arka Plan */
+    /* ChatGPT / Gemini Mat Koyu Arka Plan */
     .stApp {
         background-color: #131314;
         color: #e3e3e3;
@@ -40,7 +40,7 @@ st.markdown("""
         margin-bottom: 1.5rem;
     }
     .brand-tag {
-        color: #a8c7fa;
+        color: #c4c7c5;
         font-size: 0.78rem;
         font-weight: 600;
         text-transform: uppercase;
@@ -58,7 +58,7 @@ st.markdown("""
         color: #8e918f;
     }
 
-    /* Güvenlik Kutusu (Sadeleştirilmiş Mat Gri) */
+    /* Güvenlik Kutusu (Mat Gri & Siyah-Beyaz İkon) */
     .security-badge {
         background: #282a2c;
         border: 1px solid #3c4043;
@@ -70,23 +70,25 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    /* Buton Tasarımı (Gemini Tarzı Sade / Mat Buton) */
+    /* Siyah-Beyaz / Mat Sade Butonlar */
     .stButton>button {
         width: 100%;
-        background-color: #1a73e8;
-        color: #ffffff !important;
+        background-color: #2e2e2f;
+        color: #e3e3e3 !important;
         font-weight: 500;
         font-size: 0.92rem;
         padding: 0.6rem 1rem;
         border-radius: 8px;
-        border: none;
+        border: 1px solid #3c4043;
         transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        background-color: #1557b0;
+        background-color: #3c4043;
+        color: #ffffff !important;
+        border-color: #5e6368;
     }
 
-    /* Form Elemanları (Siyah / Koyu Kutu) */
+    /* Form Elemanları */
     .stTextArea textarea {
         background-color: #1e1e1f !important;
         border: 1px solid #3c4043 !important;
@@ -94,7 +96,7 @@ st.markdown("""
         border-radius: 8px !important;
     }
     .stTextArea textarea:focus {
-        border-color: #a8c7fa !important;
+        border-color: #8e918f !important;
     }
 
     .stSelectbox div[data-baseweb="select"] {
@@ -117,37 +119,37 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# SOL MENÜ (SIDEBAR)
+# SOL MENÜ (SIDEBAR) - Monokrom İkonlar
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("## ⚕️ SafeEpikriz AI")
+    st.markdown("## ✦ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
     
     st.markdown("""
     <div class="security-badge">
-        <b>🔒 Sıfır Veri Saklama (Zero-Data Retention):</b><br>
+        <b>🛡️ Sıfır Veri Saklama (Zero-Data Retention):</b><br>
         Raporlar sunucularımızda saklanmaz. Metindeki T.C. No ve kişisel veriler işlenmeden yerel otomasyonla anonimleştirilir.
     </div>
     """, unsafe_allow_html=True)
     
-    with st.expander("💡 Neden SafeEpikriz?"):
+    with st.expander("◈ Neden SafeEpikriz?"):
         st.write("Genel yapay zeka araçlarının aksine SafeEpikriz; TTB etik ilkeleri ve sağlık hukuku emsal kararları doğrultusunda epikriz raporlarındaki eksiklikleri ve malpraktis risklerini tespit etmek için özel olarak eğitilmiştir.")
         
-    with st.expander("📜 KVKK & Aydınlatma Metni"):
+    with st.expander("📄 KVKK & Aydınlatma Metni"):
         st.write("SafeEpikriz, KVKK ve GDPR uyumlu sıfır veri retention mimarisiyle çalışır. Kullanıcı tarafından girilen tıbbi veriler anlık analiz sonrası bellekten tamamen silinir.")
 
-    with st.expander("⚠️ Sorumluluk Reddi"):
+    with st.expander("⚡ Sorumluluk Reddi"):
         st.write("Bu platform bir hukuki danışmanlık hizmeti sunmamaktadır. Üretilen analiz raporları karar destek amaçlı olup nihai hukuki ve tıbbi sorumluluk uygulayıcı hekime aittir.")
 
-    with st.expander("ℹ️ Hakkında"):
+    with st.expander("ⓘ Hakkında"):
         st.write("SafeEpikriz AI, hekimler ve sağlık hukukçularının malpraktis risklerini en aza indirmek için geliştirilmiş bağımsız bir medikolegal denetim aracıdır.")
         
     st.markdown("---")
     st.caption("v1.0.0 • SafeEpikriz © 2026")
 
 # ---------------------------------------------------------
-# ANA EKRAN
+# ANA EKRAN - Monokrom Tasarım
 # ---------------------------------------------------------
 
 st.markdown("""
@@ -169,7 +171,7 @@ with col_brans:
 with col_sample:
     st.write("")
     st.write("")
-    sample_clicked = st.button("🧪 Örnek Vaka Yükle")
+    sample_clicked = st.button("📄 Örnek Vaka Yükle")
 
 default_text = ""
 if sample_clicked:
@@ -200,7 +202,7 @@ cb = st.checkbox("Çıktıların bilgilendirme amaçlı olduğunu kabul ediyorum
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-if st.button("🔍 Medikolegal Risk Taramasını Başlat"):
+if st.button("✦ Medikolegal Risk Taramasını Başlat"):
     if not cb:
         st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
     elif not epikriz_input.strip():
