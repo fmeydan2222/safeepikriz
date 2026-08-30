@@ -72,7 +72,7 @@ def anonimlestir(metin: str) -> str:
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
 
-# Style
+# Style - ChatGPT Tarzı Modern Modal Tasarımı
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -89,6 +89,30 @@ st.markdown("""
     .stButton>button { width: 100%; background-color: #2e2e2f; color: #e3e3e3 !important; font-weight: 500; font-size: 0.92rem; padding: 0.6rem 1rem; border-radius: 8px; border: 1px solid #3c4043; }
     .stTextArea textarea { background-color: #1e1e1f !important; border: 1px solid #3c4043 !important; color: #e3e3e3 !important; border-radius: 8px !important; }
     .usage-tracker { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #8e918f; margin-top: 0.4rem; margin-bottom: 0.8rem; }
+    
+    /* Modal Kart Stili */
+    .auth-modal {
+        background-color: #1e1e1f;
+        border: 1px solid #3c4043;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+        max-width: 440px;
+        margin: 3rem auto;
+        text-align: center;
+    }
+    .auth-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+    }
+    .auth-subtitle {
+        font-size: 0.88rem;
+        color: #8e918f;
+        margin-bottom: 1.8rem;
+        line-height: 1.4;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -104,7 +128,7 @@ with st.sidebar:
             st.session_state.user_email = None
             st.rerun()
     else:
-        st.info("🔐 Analiz yapabilmek için giriş yapmalısınız.")
+        st.info("🔐 Oturum kapalı.")
 
     st.markdown("---")
     st.markdown("""
@@ -113,9 +137,42 @@ with st.sidebar:
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.0.5 • SafeEpikriz © 2026")
+    st.caption("v1.0.6 • SafeEpikriz © 2026")
 
-# ANA EKRAN
+# GİRİŞ YAPILMAMIŞSA ORTADA ŞIK MODAL GÖSTER
+if not st.session_state.user_email:
+    # Sayfayı ortalamak için boş sütunlar kullanıyoruz
+    _, col_center, _ = st.columns([1, 1.4, 1])
+    
+    with col_center:
+        st.markdown("""
+        <div class="auth-modal">
+            <div class="auth-title">Oturum aç veya kaydol</div>
+            <div class="auth-subtitle">Medikolegal risk denetim sistemine erişmek ve 5 ücretsiz hakkınızı tanımlamak için giriş yapın.</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Google ile devam et simüle butonu
+        if st.button("🌐 Google ile Devam Et"):
+            # Gerçek OAuth tetiklenene kadar pratik e-posta promptu veya direkt test maili alabiliriz
+            st.session_state.user_email = "hekim@gmail.com"
+            st.success("Google ile başarıyla giriş yapıldı!")
+            st.rerun()
+            
+        st.markdown("<p style='text-align:center; color:#8e918f; font-size:0.8rem; margin: 1rem 0;'>VEYA E-POSTA İLE</p>", unsafe_allow_html=True)
+        
+        email_input = st.text_input("E-posta adresi:", placeholder="dr.adsoyad@hastane.com", label_visibility="collapsed")
+        if st.button("Devam Et"):
+            if "@" in email_input and "." in email_input:
+                st.session_state.user_email = email_input.strip().lower()
+                st.success("Giriş başarılı!")
+                st.rerun()
+            else:
+                st.error("Lütfen geçerli bir e-posta adresi girin.")
+    
+    st.stop()
+
+# GİRİŞ YAPILMIŞSA ANA UYGULAMA EKRANI
 st.markdown("""
 <div class="header-container">
     <span class="brand-tag">MEDİKOLEGAL RİSK DENETÇİSİ</span>
@@ -124,30 +181,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# KULLANICI GİRİŞ KONTROLÜ (Giriş yapılmamışsa metin alanı yerine şık bir Google/E-posta giriş modalı gösterilir)
-if not st.session_state.user_email:
-    st.warning("⚠️ Medikolegal risk analizi başlatmak ve kullanım hakkı (5 limit) tanımlamak için lütfen e-posta adresinizle giriş yapın.")
-    
-    col_g1, col_g2 = st.columns([2, 1])
-    with col_g1:
-        input_email = st.text_input("Google / Hekim E-posta Adresiniz:", placeholder="dr.adsoyad@gmail.com")
-    with col_g2:
-        st.write("")
-        st.write("")
-        login_btn = st.button("🌐 Google / E-posta ile Giriş Yap")
-        
-    if login_btn:
-        if "@" in input_email and "." in input_email:
-            st.session_state.user_email = input_email.strip().lower()
-            st.success("Giriş başarılı! Yönlendiriliyorsunuz...")
-            st.rerun()
-        else:
-            st.error("Lütfen geçerli bir e-posta adresi girin.")
-            
-    st.stop(
-)
-
-# GİRİŞ YAPILMIŞSA ÇALIŞACAK ANA UYGULAMA ALANI
 user_email = st.session_state.user_email
 current_usage = get_user_usage(user_email)
 max_limit = 5
