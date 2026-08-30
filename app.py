@@ -82,7 +82,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 2. ÜST METRİK & GÜVENLİK BARI (Sidebardakileri Ana Ekrana Taşıdık)
+# 2. ÜST METRİK & GÜVENLİK BARI
 col_sec, col_limit = st.columns([3, 1])
 
 with col_sec:
@@ -104,7 +104,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 # 3. BİLGİLENDİRME AKORDİYONLARI
 with st.expander("💡 Neden Genel Yapay Zeka Değil de SafeEpikriz?"):
-    st.write("SafeEpikriz, genel sohbet botlarının aksine tıbbi tıbbi malpraktis içtihatları ve TTB etik kuralları çerçevesinde epikriz metinlerindeki medikolegal eksiklikleri tespit etmek için özel olarak yapılandırılmıştır.")
+    st.write("SafeEpikriz, genel sohbet botlarının aksine tıbbi malpraktis içtihatları ve TTB etik kuralları çerçevesinde epikriz metinlerindeki medikolegal eksiklikleri tespit etmek için özel olarak yapılandırılmıştır.")
 
 with st.expander("📜 KVKK Aydınlatma Metni & Sorumluluk Reddi"):
     st.write("Bu araç bir hukuki danışmanlık hizmeti sunmaz. Üretilen çıktılar bilgilendirme amaçlı olup nihai hukuki ve tıbbi sorumluluk uygulayıcı hekime aittir.")
@@ -121,7 +121,7 @@ with col_brans:
     )
 
 with col_sample:
-    st.write("") # Düzleme boşluğu
+    st.write("") 
     st.write("")
     sample_clicked = st.button("🧪 Örnek Vaka Notu Yükle")
 
@@ -151,4 +151,3 @@ if st.button("🔍 Medikolegal Risk Denetimini Başlat"):
     else:
         with st.spinner("Medikolegal riskler taranıyor..."):
             st.success("Denetim Tamamlandı!")
-            # Analiz sonuçları buraya gelecek
