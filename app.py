@@ -31,18 +31,12 @@ if API_KEY:
         system_instruction="""
         Sen 'SafeEpikriz AI' adı altında hizmet veren uzman bir medikolegal risk denetçisisin.
         Görevin, hekimler tarafından girilen epikriz ve hasta bakım notlarını TTB etik kuralları, Türk Ceza Kanunu malpraktis emsal kararları ve medikolegal standartlar çerçevesinde denetlemektir.
-
-        Analiz çıktını şu 4 net başlık altında, profesyonel, yapıcı ve doğrudan bir dille sun:
-        1. 📊 Genelleştirilmiş Medikolegal Risk Düzeyi (Düşük / Orta / Yüksek)
-        2. 🚩 Eksik veya Riskli Tıbbi İfadeler (Aydınlatılmış onam, muayene eksikliği, taburculuk talimatı vb.)
-        3. 🛡️ Olası Malpraktis İddialarına Karşı Hukuki Koruma Önerileri
-        4. ✍️ İyileştirilmiş / Düzenlenmiş Örnek Epikriz Notu
         """
     )
 else:
     model = None
 
-# 3. Yardımcı Fonksiyonlar & Veritabanı İşlemleri
+# 3. Yardımcı Fonksiyonlar
 def get_user_usage(email: str) -> int:
     if not supabase:
         return 0
@@ -68,11 +62,10 @@ def anonimlestir(metin: str) -> str:
     metin = re.sub(r'(\+90|0)?\s*5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}', '[TEL_NO]', metin)
     return metin
 
-# 4. Oturum Kontrolü
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
 
-# Style - ChatGPT Modal Tasarımı Birebir
+# Style - Tek Parça Kusursuz ChatGPT Modal Tasarımı
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -86,59 +79,47 @@ st.markdown("""
     .main-title { font-size: 1.9rem; font-weight: 700; color: #ffffff; margin: 0.2rem 0; letter-spacing: -0.4px; }
     .main-subtitle { font-size: 0.9rem; color: #8e918f; }
     .security-badge { background: #282a2c; border: 1px solid #3c4043; color: #c4c7c5; padding: 0.8rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.45; margin-bottom: 1rem; }
-    
-    /* Arkası Karartılmış Tam Ekran Overlay */
-    .modal-overlay {
-        position: fixed;
-        top: 0; left: 0; width: 100vw; height: 100vh;
-        background-color: rgba(0, 0, 0, 0.75);
-        z-index: 999;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    
-    /* Tam Merkezdeki Şık Modal Kutu */
-    .chatgpt-modal {
+
+    /* Tam Merkezdeki Tek Parça Kutu */
+    .chatgpt-box {
         background-color: #212121;
         border: 1px solid #383838;
         padding: 2.5rem 2rem;
         border-radius: 20px;
         box-shadow: 0 20px 50px rgba(0,0,0,0.8);
         width: 100%;
-        max-width: 420px;
-        margin: 0 auto;
+        max-width: 440px;
+        margin: 2rem auto;
         text-align: center;
     }
-    .modal-title {
-        font-size: 1.5rem;
+    .box-title {
+        font-size: 1.45rem;
         font-weight: 700;
         color: #ffffff;
-        margin-bottom: 0.6rem;
+        margin-bottom: 0.5rem;
     }
-    .modal-desc {
-        font-size: 0.85rem;
+    .box-desc {
+        font-size: 0.84rem;
         color: #b4b4b4;
-        margin-bottom: 2rem;
+        margin-bottom: 1.8rem;
         line-height: 1.4;
     }
-    .divider-text {
-        font-size: 0.75rem;
+    .divider {
+        font-size: 0.7rem;
         color: #727272;
-        letter-spacing: 1px;
+        letter-spacing: 1.5px;
         margin: 1.2rem 0;
         font-weight: 600;
     }
     .stButton>button {
-        width: 100%;
+        width: 100% !important;
         background-color: #2f2f2f !important;
         color: #ffffff !important;
         font-weight: 600 !important;
-        font-size: 0.92rem !important;
-        padding: 0.7rem 1rem !important;
+        font-size: 0.9rem !important;
+        padding: 0.65rem 1rem !important;
         border-radius: 10px !important;
         border: 1px solid #424242 !important;
-        margin-bottom: 0.5rem;
     }
     .stButton>button:hover {
         background-color: #383838 !important;
@@ -149,7 +130,7 @@ st.markdown("""
         border: 1px solid #424242 !important;
         color: #ffffff !important;
         border-radius: 10px !important;
-        padding: 0.6rem !important;
+        padding: 0.55rem !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -159,7 +140,6 @@ with st.sidebar:
     st.markdown("### 🛡️ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
-    
     if st.session_state.user_email:
         st.success(f"Oturum Açık:\n{st.session_state.user_email}")
         if st.button("Çıkış Yap"):
@@ -167,7 +147,6 @@ with st.sidebar:
             st.rerun()
     else:
         st.info("🔐 Oturum kapalı.")
-
     st.markdown("---")
     st.markdown("""
     <div class="security-badge">
@@ -175,9 +154,9 @@ with st.sidebar:
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.0.7 • SafeEpikriz © 2026")
+    st.caption("v1.0.8 • SafeEpikriz © 2026")
 
-# GİRİŞ YAPILMIŞSA ANA UYGULAMA EKRANI
+# GİRİŞ YAPILMIŞSA ANA UYGULAMA
 if st.session_state.user_email:
     st.markdown("""
     <div class="header-container">
@@ -233,9 +212,7 @@ if st.session_state.user_email:
                 try:
                     prompt = f"Branş: {brans}\n\nKlinik Hasta Notu:\n{temiz_metin}"
                     response = model.generate_content(prompt)
-                    
                     increment_user_usage(user_email, current_usage)
-                    
                     st.success("Taratma Tamamlandı!")
                     st.markdown("---")
                     st.markdown("### 📋 SafeEpikriz Denetim Raporu")
@@ -244,27 +221,29 @@ if st.session_state.user_email:
                 except Exception as e:
                     st.error(f"Analiz sırasında bir hata oluştu: {e}")
 
-# GİRİŞ YAPILMAMIŞSA ORTADA ŞIK CHATGPT TARZI MODAL KUTU
+# GİRİŞ YAPILMAMIŞSA TEK PARÇA ORTADAKİ KUTU
 else:
     _, col_center, _ = st.columns([1, 1.3, 1])
     
     with col_center:
+        st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
+        
+        # Kutunun başlangıcı
         st.markdown("""
-        <div style="height: 6vh;"></div>
-        <div class="chatgpt-modal">
-            <div class="modal-title">Oturum aç veya kaydol</div>
-            <div class="modal-desc">Medikolegal risk denetim sistemine erişmek ve 5 ücretsiz hakkınızı tanımlamak için giriş yapın.</div>
-        </div>
+        <div class="chatgpt-box">
+            <div class="box-title">Oturum aç veya kaydol</div>
+            <div class="box-desc">Medikolegal risk denetim sistemine erişmek ve 5 ücretsiz hakkınızı tanımlamak için giriş yapın.</div>
         """, unsafe_allow_html=True)
         
-        if st.button("🌐  Google ile Devam Et"):
+        if st.button("🌐 Google ile Devam Et"):
             st.session_state.user_email = "hekim@gmail.com"
-            st.success("Google ile giriş yapıldı!")
+            st.success("Giriş yapıldı!")
             st.rerun()
             
-        st.markdown("<div class='divider-text'>VEYA E-POSTA İLE</div>", unsafe_allow_html=True)
+        st.markdown("<div class='divider'>VEYA E-POSTA İLE</div>", unsafe_allow_html=True)
         
         email_input = st.text_input("E-posta adresiniz", placeholder="dr.adsoyad@hastane.com", label_visibility="collapsed")
+        
         if st.button("Devam Et"):
             if "@" in email_input and "." in email_input:
                 st.session_state.user_email = email_input.strip().lower()
@@ -272,3 +251,6 @@ else:
                 st.rerun()
             else:
                 st.error("Lütfen geçerli bir e-posta adresi girin.")
+                
+        # Kutunun kapanışı
+        st.markdown("</div>", unsafe_allow_html=True)
