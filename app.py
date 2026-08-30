@@ -1,7 +1,9 @@
 import streamlit as st
 import re
+import os
+import google.generativeai as genai
 
-# 1. Sayfa Yapılandırması (ChatGPT/Gemini Odaklı Tasarım)
+# 1. Sayfa Yapılandırması
 st.set_page_config(
     page_title="SafeEpikriz AI | Medikolegal Risk Denetimi",
     page_icon="🛡️",
@@ -9,21 +11,38 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Session State (Kullanım Sayacı)
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 
-# 2. Yerel PII Anonimleştirici (Gemini'ye Gitmeden Önce Veri Temizliği)
+# 2. Gemini API Yapılandırması
+API_KEY = os.getenv("GEMINI_API_KEY")
+
+if API_KEY:
+    genai.configure(api_key=API_KEY)
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction="""
+        Sen 'SafeEpikriz AI' adı altında hizmet veren uzman bir medikolegal risk denetçisisin.
+        Görevin, hekimler tarafından girilen epikriz ve hasta bakım notlarını TTB etik kuralları, Türk Ceza Kanunu malpraktis emsal kararları ve medikolegal standartlar çerçevesinde denetlemektir.
+
+        Analiz çıktını şu 4 net başlık altında, profesyonel, yapıcı ve doğrudan bir dille sun:
+        1. 📊 Genelleştirilmiş Medikolegal Risk Düzeyi (Düşük / Orta / Yüksek)
+        2. 🚩 Eksik veya Riskli Tıbbi İfadeler (Aydınlatılmış onam, muayene eksikliği, taburculuk talimatı vb.)
+        3. 🛡️ Olası Malpraktis İddialarına Karşı Hukuki Koruma Önerileri
+        4. ✍️ İyileştirilmiş / Düzenlenmiş Örnek Epikriz Notu
+        """
+    )
+else:
+    model = None
+
+# 3. Yerel PII Anonimleştirici
 def anonimlestir(metin: str) -> str:
-    # T.C. Kimlik No (11 Haneli)
     metin = re.sub(r'\b[1-9][0-9]{10}\b', '[TC_NO_GİZLENDİ]', metin)
-    # Telefon Numaraları
     metin = re.sub(r'(\+90|0)?\s*5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}', '[TEL_NO_GİZLENDİ]', metin)
-    # İsim Maskeleme (Hasta: Ahmet Yılmaz -> Hasta: [HASTA_ADI])
     metin = re.sub(r'(Hasta\s+Adı\s*:?|Hasta\s*:?)\s*([A-ZÇĞİÖŞÜa-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜa-zçğıöşü]+)+)', r'\1 [HASTA_ADI_GİZLENDİ]', metin, flags=re.IGNORECASE)
     return metin
 
-# 3. Özel CSS: ChatGPT & Gemini Tarzı Mat Koyu ve Monokrom Teması
+# 4. Özel CSS (ChatGPT/Gemini Mat Koyu Teması)
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -32,19 +51,16 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* ChatGPT / Gemini Mat Koyu Arka Plan */
     .stApp {
         background-color: #131314;
         color: #e3e3e3;
     }
 
-    /* Sol Menü (Sidebar) Mat Siyah */
     section[data-testid="stSidebar"] {
         background-color: #1e1e1f;
         border-right: 1px solid #2e2e2f;
     }
 
-    /* Üst Sade Başlık */
     .header-container {
         padding: 0.5rem 0 1.2rem 0;
         border-bottom: 1px solid #2e2e2f;
@@ -69,7 +85,6 @@ st.markdown("""
         color: #8e918f;
     }
 
-    /* Güvenlik Kutusu */
     .security-badge {
         background: #282a2c;
         border: 1px solid #3c4043;
@@ -81,7 +96,6 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    /* Monokrom Butonlar */
     .stButton>button {
         width: 100%;
         background-color: #2e2e2f;
@@ -99,7 +113,6 @@ st.markdown("""
         border-color: #5e6368;
     }
 
-    /* Form Elemanları */
     .stTextArea textarea {
         background-color: #1e1e1f !important;
         border: 1px solid #3c4043 !important;
@@ -133,7 +146,12 @@ st.markdown("""
 # SOL MENÜ (SIDEBAR)
 # ---------------------------------------------------------
 with st.sidebar:
-    st.markdown("## ✦ SafeEpikriz AI")
+    try:
+        st.image("logo.png", use_container_width=True)
+    except Exception:
+        st.warning("`logo.png` dosyası okunamadı. Lütfen dosya adını kontrol edin.")
+    
+    st.markdown("## SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
     
@@ -220,14 +238,27 @@ if st.button("✦ Medikolegal Risk Taramasını Başlat"):
         st.error("Lütfen analiz edilecek bir epikriz metni girin.")
     elif st.session_state.usage_count >= max_limit:
         st.error("Ücretsiz kullanım limitinize ulaştınız (5/5).")
+    elif not model:
+        st.error("Gemini API anahtarı sunucuda tanımlanmamış. Lütfen Render ortam değişkenlerini kontrol edin.")
     else:
         st.session_state.usage_count += 1
         
-        # 1. Otomatik Anonimleştirme
+        # 1. PII Anonimleştirme
         temiz_metin = anonimlestir(epikriz_input)
         
-        with st.spinner("Metin anonimleştiriliyor ve medikolegal riskler taranıyor..."):
-            st.success("Taratma Tamamlandı!")
-            
-            # Anonimleşti Uyarısı
-            st.info(f"🔒 **Güvenlik Notu:** Metniniz yerel olarak anonimleştirildi. (İşlenen hali: `{temiz_metin[:60]}...`)")
+        with st.spinner("Metin anonimleştirildi. Gemini AI ile medikolegal riskler taranıyor..."):
+            try:
+                # 2. Gemini API Çağrısı
+                prompt = f"Branş: {brans}\n\nAnonimleştirilmiş Hasta Notu:\n{temiz_metin}"
+                response = model.generate_content(prompt)
+                
+                st.success("Taratma Tamamlandı!")
+                st.info(f"🔒 **Güvenlik İkazı:** Metin yapay zekaya gönderilmeden önce yerel olarak anonimleştirilmiştir.")
+                
+                # 3. Sonuç Raporu
+                st.markdown("---")
+                st.markdown("### 📋 SafeEpikriz Denetim Raporu")
+                st.markdown(response.text)
+                
+            except Exception as e:
+                st.error(f"Analiz sırasında bir hata oluştu: {e}")
