@@ -42,7 +42,7 @@ def anonimlestir(metin: str) -> str:
     metin = re.sub(r'(Hasta\s+Adı\s*:?|Hasta\s*:?)\s*([A-ZÇĞİÖŞÜa-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜa-zçğıöşü]+)+)', r'\1 [HASTA_ADI_GİZLENDİ]', metin, flags=re.IGNORECASE)
     return metin
 
-# 4. Özel CSS (ChatGPT/Gemini Mat Koyu Teması)
+# 4. Özel CSS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -143,14 +143,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# SOL MENÜ (SIDEBAR)
+# SOL MENÜ (SIDEBAR) - LOGO BAŞLIKLA YAN YANA
 # ---------------------------------------------------------
 with st.sidebar:
-    if os.path.exists("logo.png"):
-        # Logoyu küçültüp daha kibar bir orana getirdik (width=80)
-        st.image("logo.png", width=80)
+    col_logo, col_title = st.columns([1, 3])
     
-    st.markdown("## SafeEpikriz AI")
+    with col_logo:
+        if os.path.exists("logo.png"):
+            st.image("logo.png", width=42)
+            
+    with col_title:
+        st.markdown("### SafeEpikriz AI")
+        
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
     
@@ -201,7 +205,7 @@ with col_sample:
     st.write("")
     sample_clicked = st.button("📄 Örnek Vaka Yükle")
 
-# PII Gizlenmiş Şablon Örnek Metin
+# TAMAMEN ANONİMLEŞTİRİLMİŞ ŞABLON ÖRNEK METİN
 default_text = ""
 if sample_clicked:
     default_text = "Hasta [HASTA_ADI_GİZLENDİ] (TC: [TC_NO_GİZLENDİ]) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
@@ -227,8 +231,8 @@ st.progress(current_usage / max_limit)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Hukuki Korumayı Artıran Detaylı Onay Kutusu
-cb = st.checkbox("Üretilen analizlerin karar destek amaçlı olduğunu, nihai tıbbi/hukuki sorumluluğun tarafıma ait olduğunu ve KVKK/Aydınlatma koşullarını kabul ediyorum.")
+# DETAYLI VE KORUYUCU HUKUKİ ONAY KUTUSU
+cb = st.checkbox("Üretilen analizlerin karar destek amaçlı olduğunu, nihai tıbbi ve hukuki sorumluluğun tarafıma ait olduğunu ve KVKK/Aydınlatma koşullarını kabul ediyorum.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
