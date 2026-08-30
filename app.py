@@ -150,7 +150,7 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
     .stApp { background-color: #131314; color: #e3e3e3; }
-    section[data-testid="stSidebar"] { background-color: #1e1e1f; border-right: 1px solid #2e2e2f; }
+    section[data-testid="stSidebar"] { background-color: #1e1e1f; border-right: 1px solid #2e2e2f; display: flex; flex-direction: column; justify-content: space-between; }
     .header-container { padding: 0.5rem 0 1.2rem 0; border-bottom: 1px solid #2e2e2f; margin-bottom: 1.5rem; }
     .brand-tag { color: #c4c7c5; font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; }
     .main-title { font-size: 1.9rem; font-weight: 700; color: #ffffff; margin: 0.2rem 0; letter-spacing: -0.4px; }
@@ -196,7 +196,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ABONELİK YÖNETİMİ MODALI
+# MODALLAR
 @st.dialog("Aboneliği Yönet")
 def billing_dialog():
     st.markdown("### 💎 Mevcut Plan: Ücretsiz Deneme")
@@ -206,42 +206,46 @@ def billing_dialog():
     if st.button("Kapat"):
         st.rerun()
 
-# SIDEBAR (Gemini Tarzı Sadece Profil ve Siyah-Beyaz İkon Butonlar)
+@st.dialog("Geri Bildirimde Bulun")
+def feedback_dialog():
+    st.markdown("### 💬 Görüşleriniz Bizim İçin Değerli")
+    feedback_text = st.text_area("Platformu geliştirmemiz için önerilerinizi veya bildirmek istediğiniz hataları yazın:")
+    if st.button("Geri Bildirimi Gönder"):
+        if feedback_text.strip():
+            st.success("Teşekkürler! Geri bildiriminiz başarıyla iletildi.")
+        else:
+            st.error("Lütfen boş bırakmayın.")
+
+# SIDEBAR (Gemini Tarzı: Sol altta profil ve kompakt menü)
 with st.sidebar:
     st.markdown("### 🛡️ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
     
+    # Boşluk bırakarak alt kısma yaklaşma
+    st.markdown("<div style='height: 45vh;'></div>", unsafe_allow_html=True)
+    
     if st.session_state.user_email:
-        # Sadece Dairesel Profil Fotoğrafı (Yazı yok, Gemini Tarzı)
-        avatar_html = ""
-        if st.session_state.user_avatar:
-            avatar_html = f'<img src="{st.session_state.user_avatar}" title="{st.session_state.user_email}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px auto;">'
-        else:
-            avatar_html = f'<div title="{st.session_state.user_email}" style="width: 36px; height: 36px; border-radius: 50%; background-color: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 10px auto;">{st.session_state.user_email[0].upper()}</div>'
-
-        st.markdown(avatar_html, unsafe_allow_html=True)
-
-        # Siyah-Beyaz Temalı Simge Butonlar (Yazısız)
-        col_icon1, col_icon2 = st.columns(2)
-        with col_icon1:
-            if st.button("💳", help="Aboneliği Yönet"):
+        # Gemini Tarzı Açılır/Genişletilebilir Menü veya Popover
+        with st.popover("👤"):
+            st.markdown(f"**{st.session_state.user_email}**")
+            st.markdown("---")
+            if st.button("💎 Aboneliği Yönet"):
                 billing_dialog()
-        with col_icon2:
-            if st.button("🚪", help="Çıkış Yap"):
+            if st.button("💬 Geri Bildirimde Bulun"):
+                feedback_dialog()
+            if st.button("🚪 Çıkış Yap"):
                 st.session_state.user_email = None
                 st.session_state.user_avatar = None
                 st.rerun()
-            
-        st.markdown("---")
     
     st.markdown("""
-    <div class="security-badge">
+    <div class="security-badge" style="margin-top: 1rem;">
         <b>🛡️ Sıfır Veri Saklama:</b><br>
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.3.2 • SafeEpikriz © 2026")
+    st.caption("v1.4.0 • SafeEpikriz © 2026")
 
 # ANA ARAYÜZ
 st.markdown("""
@@ -254,7 +258,7 @@ st.markdown("""
 
 is_logged_in = st.session_state.user_email is not None
 
-# GİRİŞ YAPILMAMIŞSA: ORTADAKİ CHATGPT KUTUSU (Ortalanmış Inputlar)
+# GİRİŞ YAPILMAMIŞSA: ORTADAKİ CHATGPT KUTUSU (Ortalanmış buton)
 if not is_logged_in:
     _, col_center, _ = st.columns([1, 1.4, 1])
     with col_center:
@@ -286,23 +290,29 @@ if not is_logged_in:
 
         if not st.session_state.otp_pending_email:
             email_input = st.text_input("E-posta adresiniz", placeholder="dr.adsoyad@hastane.com", label_visibility="collapsed")
-            if st.button("Devam Et"):
-                cleaned_email = email_input.strip().lower()
-                if "@" in cleaned_email and "." in cleaned_email:
-                    if send_otp(cleaned_email):
-                        st.session_state.otp_pending_email = cleaned_email
-                        st.rerun()
-                else:
-                    st.error("Lütfen geçerli bir e-posta adresi girin.")
+            
+            # --- "Devam Et" Butonu Ortalandı ---
+            col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
+            with col_b2:
+                if st.button("Devam Et"):
+                    cleaned_email = email_input.strip().lower()
+                    if "@" in cleaned_email and "." in cleaned_email:
+                        if send_otp(cleaned_email):
+                            st.session_state.otp_pending_email = cleaned_email
+                            st.rerun()
+                    else:
+                        st.error("Lütfen geçerli bir e-posta adresi girin.")
         else:
             st.markdown(f"<p style='color:#b4b4b4; font-size:0.85rem; margin-bottom:0.8rem;'><b>{st.session_state.otp_pending_email}</b> adresine gönderilen kodu girin:</p>", unsafe_allow_html=True)
             code_input = st.text_input("Doğrulama Kodu", placeholder="6 haneli kod", label_visibility="collapsed")
             
-            if st.button("Doğrula ve Giriş Yap"):
-                if verify_otp(st.session_state.otp_pending_email, code_input.strip()):
-                    st.session_state.user_email = st.session_state.otp_pending_email
-                    st.session_state.otp_pending_email = None
-                    st.rerun()
+            col_b1, col_b2, col_b3 = st.columns([1, 2, 1])
+            with col_b2:
+                if st.button("Doğrula ve Giriş Yap"):
+                    if verify_otp(st.session_state.otp_pending_email, code_input.strip()):
+                        st.session_state.user_email = st.session_state.otp_pending_email
+                        st.session_state.otp_pending_email = None
+                        st.rerun()
 
             if st.button("↩ Farklı e-posta kullan"):
                 st.session_state.otp_pending_email = None
