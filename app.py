@@ -8,11 +8,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Initialize Session State (Kullanım Sayacı İçin)
+# Session State Hazırlığı (Sayaç için)
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 
-# 2. Özel CSS: Modern, Sade & Şık SaaS Teması
+# 2. Özel CSS
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -21,19 +21,16 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Ana Arka Plan */
     .stApp {
         background-color: #0f172a;
         color: #f8fafc;
     }
 
-    /* Sol Menü (Sidebar) Styling */
     section[data-testid="stSidebar"] {
         background-color: #1e293b;
         border-right: 1px solid #334155;
     }
 
-    /* En Üst Sade Başlık */
     .header-container {
         padding: 0.5rem 0 1.2rem 0;
         border-bottom: 1px solid #334155;
@@ -58,7 +55,6 @@ st.markdown("""
         color: #94a3b8;
     }
 
-    /* Sol Menü Güvenlik Rozeti */
     .security-badge {
         background: rgba(16, 185, 129, 0.1);
         border: 1px solid rgba(16, 185, 129, 0.3);
@@ -70,7 +66,6 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    /* Buton Tasarımı */
     .stButton>button {
         width: 100%;
         background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
@@ -88,7 +83,6 @@ st.markdown("""
         transform: translateY(-1px);
     }
 
-    /* İlerleme/Sayaç Alanı */
     .usage-tracker {
         display: flex;
         justify-content: space-between;
@@ -101,15 +95,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
+# ---------------------------------------------------------
 # SOL MENÜ (SIDEBAR)
-# =========================================================
+# ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## ⚕️ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
     
-    # Sıfır Veri Saklama Rozeti
     st.markdown("""
     <div class="security-badge">
         <b>🔒 Sıfır Veri Saklama (Zero-Data Retention):</b><br>
@@ -117,7 +110,6 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    # Sol Menü Akordiyonları
     with st.expander("💡 Neden SafeEpikriz?"):
         st.write("Genel yapay zeka araçlarının aksine SafeEpikriz; TTB etik ilkeleri ve sağlık hukuku emsal kararları doğrultusunda epikriz raporlarındaki eksiklikleri ve malpraktis risklerini tespit etmek için özel olarak eğitilmiştir.")
         
@@ -133,11 +125,10 @@ with st.sidebar:
     st.markdown("---")
     st.caption("v1.0.0 • SafeEpikriz © 2026")
 
-# =========================================================
-# ANA EKRAN (ORTA ALAN)
-# =========================================================
+# ---------------------------------------------------------
+# ANA EKRAN
+# ---------------------------------------------------------
 
-# Sade Başlık
 st.markdown("""
 <div class="header-container">
     <span class="brand-tag">MEDİKOLEGAL RİSK DENETÇİSİ</span>
@@ -146,7 +137,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Branş Seçimi & Örnek Yükleme
 col_brans, col_sample = st.columns([2, 1])
 
 with col_brans:
@@ -160,12 +150,10 @@ with col_sample:
     st.write("")
     sample_clicked = st.button("🧪 Örnek Vaka Yükle")
 
-# Örnek Metin Doldurma
 default_text = ""
 if sample_clicked:
     default_text = "Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
 
-# Metin Giriş Kutusu
 epikriz_input = st.text_area(
     "HBYS Ham Epikriz / Hasta Notu:",
     value=default_text,
@@ -173,7 +161,6 @@ epikriz_input = st.text_area(
     placeholder="HBYS'den kopyaladığınız anamnez, fizik muayene ve taburculuk notunu buraya yapıştırın..."
 )
 
-# Metin Kutusunun Altına Şık Hak Sayacı (1/5, 2/5 vs.)
 max_limit = 5
 current_usage = st.session_state.usage_count
 
@@ -184,17 +171,14 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# İlerleme Çubuğu (Progress Bar)
 st.progress(current_usage / max_limit)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Onay Kutusu
 cb = st.checkbox("Çıktıların bilgilendirme amaçlı olduğunu kabul ediyorum.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Denetim Butonu
 if st.button("🔍 Medikolegal Risk Taramasını Başlat"):
     if not cb:
         st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
@@ -203,7 +187,6 @@ if st.button("🔍 Medikolegal Risk Taramasını Başlat"):
     elif st.session_state.usage_count >= max_limit:
         st.error("Ücretsiz kullanım limitinize ulaştınız (5/5).")
     else:
-        # Denetim başarılı olduğunda sayacı 1 artırır
         st.session_state.usage_count += 1
         with st.spinner("Metin medikolegal açıdan taranıyor..."):
             st.success("Taratma Tamamlandı!")
