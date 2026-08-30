@@ -191,6 +191,7 @@ st.markdown("""
         color: #ffffff !important;
         border-radius: 10px !important;
         padding: 0.55rem !important;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -205,35 +206,32 @@ def billing_dialog():
     if st.button("Kapat"):
         st.rerun()
 
-# SIDEBAR
+# SIDEBAR (Gemini Tarzı Sadece Profil ve Siyah-Beyaz İkon Butonlar)
 with st.sidebar:
     st.markdown("### 🛡️ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
     
     if st.session_state.user_email:
+        # Sadece Dairesel Profil Fotoğrafı (Yazı yok, Gemini Tarzı)
         avatar_html = ""
         if st.session_state.user_avatar:
-            avatar_html = f'<img src="{st.session_state.user_avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px; vertical-align: middle;">'
+            avatar_html = f'<img src="{st.session_state.user_avatar}" title="{st.session_state.user_email}" style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; display: block; margin: 0 auto 10px auto;">'
         else:
-            avatar_html = '<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #4f46e5; color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; vertical-align: middle;">' + st.session_state.user_email[0].upper() + '</div>'
+            avatar_html = f'<div title="{st.session_state.user_email}" style="width: 36px; height: 36px; border-radius: 50%; background-color: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; margin: 0 auto 10px auto;">{st.session_state.user_email[0].upper()}</div>'
 
-        st.markdown(f"""
-        <div style="background-color: #252528; padding: 10px; border-radius: 10px; display: flex; align-items: center; margin-bottom: 10px;">
-            {avatar_html}
-            <div style="overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; color: #e3e3e3;">
-                <b>{st.session_state.user_email}</b>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(avatar_html, unsafe_allow_html=True)
 
-        if st.button("💳 Aboneliği Yönet"):
-            billing_dialog()
-
-        if st.button("Çıkış Yap"):
-            st.session_state.user_email = None
-            st.session_state.user_avatar = None
-            st.rerun()
+        # Siyah-Beyaz Temalı Simge Butonlar (Yazısız)
+        col_icon1, col_icon2 = st.columns(2)
+        with col_icon1:
+            if st.button("💳", help="Aboneliği Yönet"):
+                billing_dialog()
+        with col_icon2:
+            if st.button("🚪", help="Çıkış Yap"):
+                st.session_state.user_email = None
+                st.session_state.user_avatar = None
+                st.rerun()
             
         st.markdown("---")
     
@@ -243,7 +241,7 @@ with st.sidebar:
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.3.1 • SafeEpikriz © 2026")
+    st.caption("v1.3.2 • SafeEpikriz © 2026")
 
 # ANA ARAYÜZ
 st.markdown("""
@@ -256,7 +254,7 @@ st.markdown("""
 
 is_logged_in = st.session_state.user_email is not None
 
-# GİRİŞ YAPILMAMIŞSA: EKRANIN ORTASINDA SABİT CHATGPT MODAL KUTUSU
+# GİRİŞ YAPILMAMIŞSA: ORTADAKİ CHATGPT KUTUSU (Ortalanmış Inputlar)
 if not is_logged_in:
     _, col_center, _ = st.columns([1, 1.4, 1])
     with col_center:
