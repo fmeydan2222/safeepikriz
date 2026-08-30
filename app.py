@@ -8,7 +8,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Özel CSS: Minimalist & Modern Premium SaaS Teması
+# Initialize Session State (Kullanım Sayacı İçin)
+if 'usage_count' not in st.session_state:
+    st.session_state.usage_count = 0
+
+# 2. Özel CSS: Modern, Sade & Şık SaaS Teması
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -17,156 +21,132 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Ana Arka Plan - Temiz Slate Koyu Teması */
+    /* Ana Arka Plan */
     .stApp {
-        background-color: #0d1117;
-        color: #e6edf3;
+        background-color: #0f172a;
+        color: #f8fafc;
     }
 
-    /* Sol Menü (Sidebar) */
+    /* Sol Menü (Sidebar) Styling */
     section[data-testid="stSidebar"] {
-        background-color: #161b22;
-        border-right: 1px solid #30363d;
+        background-color: #1e293b;
+        border-right: 1px solid #334155;
     }
 
-    /* Minimalist Sade Başlık (Kutu Yok) */
+    /* En Üst Sade Başlık */
     .header-container {
-        padding: 0.5rem 0 1.5rem 0;
-        border-bottom: 1px solid #21262d;
+        padding: 0.5rem 0 1.2rem 0;
+        border-bottom: 1px solid #334155;
         margin-bottom: 1.5rem;
     }
-    .brand-badge {
-        display: inline-block;
-        background: rgba(56, 189, 248, 0.1);
+    .brand-tag {
         color: #38bdf8;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.78rem;
-        font-weight: 600;
-        margin-bottom: 10px;
-        border: 1px solid rgba(56, 189, 248, 0.2);
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     .main-title {
-        font-size: 1.9rem;
-        font-weight: 700;
+        font-size: 2rem;
+        font-weight: 800;
         color: #ffffff;
-        margin: 0;
+        margin: 0.2rem 0;
         letter-spacing: -0.5px;
     }
     .main-subtitle {
-        font-size: 0.92rem;
-        color: #8b949e;
-        margin-top: 6px;
+        font-size: 0.95rem;
+        color: #94a3b8;
     }
 
-    /* Sol Menü Kartları */
-    .sidebar-card {
-        background: #21262d;
-        border: 1px solid #30363d;
-        padding: 1rem;
-        border-radius: 10px;
-        margin-bottom: 1rem;
-    }
-    .sidebar-badge {
-        background: rgba(46, 160, 67, 0.1);
-        border: 1px solid rgba(46, 160, 67, 0.25);
-        color: #3fb950;
-        padding: 0.85rem;
+    /* Sol Menü Güvenlik Rozeti */
+    .security-badge {
+        background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: #34d399;
+        padding: 0.8rem;
         border-radius: 8px;
-        font-size: 0.8rem;
-        line-height: 1.45;
+        font-size: 0.82rem;
+        line-height: 1.4;
         margin-bottom: 1rem;
     }
 
-    /* Buton Tasarımı - Zümrüt / Mavi İnce Gradient */
+    /* Buton Tasarımı */
     .stButton>button {
         width: 100%;
-        background: #238636;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
         color: #ffffff !important;
         font-weight: 600;
         font-size: 0.95rem;
         padding: 0.65rem 1rem;
         border-radius: 8px;
-        border: 1px solid rgba(240, 246, 252, 0.1);
+        border: none;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        background: #2ea043;
-        border-color: #8b949e;
+        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+        transform: translateY(-1px);
     }
 
-    /* Form Elemanları Özelleştirme */
-    .stTextArea textarea {
-        background-color: #161b22 !important;
-        border: 1px solid #30363d !important;
-        color: #f0f6fc !important;
-        border-radius: 8px !important;
-    }
-    .stTextArea textarea:focus {
-        border-color: #58a6ff !important;
-    }
-
-    .stSelectbox div[data-baseweb="select"] {
-        background-color: #161b22 !important;
-        border-color: #30363d !important;
-        border-radius: 8px !important;
+    /* İlerleme/Sayaç Alanı */
+    .usage-tracker {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.82rem;
+        color: #94a3b8;
+        margin-top: 0.4rem;
+        margin-bottom: 0.8rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# ---------------------------------------------------------
+# =========================================================
 # SOL MENÜ (SIDEBAR)
-# ---------------------------------------------------------
+# =========================================================
 with st.sidebar:
-    st.markdown("### ⚕️ SafeEpikriz AI")
-    st.caption("Medikolegal Risk Denetim Paneli")
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Kullanım Limiti Göstergesi
-    st.markdown("""
-    <div class="sidebar-card" style="text-align: center;">
-        <small style="color: #8b949e;">Kalan Ücretsiz Denetim</small>
-        <h2 style="margin: 0.2rem 0; color: #58a6ff; font-size: 1.7rem; font-weight: 700;">5 / 5</h2>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Veri Güvenliği Garantisi
-    st.markdown("""
-    <div class="sidebar-badge">
-        <b>🔒 KVKK & Veri Güvenliği:</b><br>
-        Girilen veriler sunucularda kaydedilmez. T.C. No ve kişisel tanımlayıcılar yerel otomasyonla süzülür.
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Hızlı Adımlar
-    st.markdown("#### 📌 Kullanım Adımları")
-    st.caption("1. İlgili tıbbi branşı seçin.")
-    st.caption("2. HBYS'den hasta notunu yapıştırın.")
-    st.caption("3. Denetim butonuna tıklayarak riskleri görün.")
-    
+    st.markdown("## ⚕️ SafeEpikriz AI")
+    st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
-    st.caption("SafeEpikriz AI v1.0 • 2026")
+    
+    # Sıfır Veri Saklama Rozeti
+    st.markdown("""
+    <div class="security-badge">
+        <b>🔒 Sıfır Veri Saklama (Zero-Data Retention):</b><br>
+        Raporlar sunucularımızda saklanmaz. Metindeki T.C. No ve kişisel veriler işlenmeden yerel otomasyonla anonimleştirilir.
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Sol Menü Akordiyonları
+    with st.expander("💡 Neden SafeEpikriz?"):
+        st.write("Genel yapay zeka araçlarının aksine SafeEpikriz; TTB etik ilkeleri ve sağlık hukuku emsal kararları doğrultusunda epikriz raporlarındaki eksiklikleri ve malpraktis risklerini tespit etmek için özel olarak eğitilmiştir.")
+        
+    with st.expander("📜 KVKK & Aydınlatma Metni"):
+        st.write("SafeEpikriz, KVKK ve GDPR uyumlu sıfır veri retention mimarisiyle çalışır. Kullanıcı tarafından girilen tıbbi veriler anlık analiz sonrası bellekten tamamen silinir.")
 
-# ---------------------------------------------------------
-# ANA EKRAN
-# ---------------------------------------------------------
+    with st.expander("⚠️ Sorumluluk Reddi"):
+        st.write("Bu platform bir hukuki danışmanlık hizmeti sunmamaktadır. Üretilen analiz raporları karar destek amaçlı olup nihai hukuki ve tıbbi sorumluluk uygulayıcı hekime aittir.")
 
-# Sade ve Kutusuz Başlık Alanı
+    with st.expander("ℹ️ Hakkında"):
+        st.write("SafeEpikriz AI, hekimler ve sağlık hukukçularının malpraktis risklerini en aza indirmek için geliştirilmiş bağımsız bir medikolegal denetim aracıdır.")
+        
+    st.markdown("---")
+    st.caption("v1.0.0 • SafeEpikriz © 2026")
+
+# =========================================================
+# ANA EKRAN (ORTA ALAN)
+# =========================================================
+
+# Sade Başlık
 st.markdown("""
 <div class="header-container">
-    <span class="brand-badge">PROTOTEK / SAĞLIK HUKUKU</span>
-    <h1 class="main-title">SafeEpikriz Risk Denetçisi</h1>
-    <p class="main-subtitle">Epikriz ve taburculuk notlarındaki medikolegal riskleri ve malpraktis açıklarını tespit edin.</p>
+    <span class="brand-tag">MEDİKOLEGAL RİSK DENETÇİSİ</span>
+    <h1 class="main-title">SafeEpikriz Risk Denetimi</h1>
+    <p class="main-subtitle">Epikriz ve taburculuk notlarınızdaki medikolegal riskleri ve eksiklikleri anında tespit edin.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Bilgilendirme Akordiyonu
-with st.expander("ℹ️ Sistem Hakkında & Sorumluluk Reddi"):
-    st.write("SafeEpikriz, TTB etik ilkeleri ve sağlık hukuku içtihatları doğrultusunda epikriz metinlerindeki eksiklikleri değerlendirir. Çıktılar karar destek amaçlı olup nihai hukuki/tıbbi sorumluluk hekime aittir.")
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Branş Seçimi ve Örnek Yükleme
+# Branş Seçimi & Örnek Yükleme
 col_brans, col_sample = st.columns([2, 1])
 
 with col_brans:
@@ -180,18 +160,34 @@ with col_sample:
     st.write("")
     sample_clicked = st.button("🧪 Örnek Vaka Yükle")
 
-# Örnek Metin
+# Örnek Metin Doldurma
 default_text = ""
 if sample_clicked:
     default_text = "Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
 
-# Metin Alanı
+# Metin Giriş Kutusu
 epikriz_input = st.text_area(
     "HBYS Ham Epikriz / Hasta Notu:",
     value=default_text,
     height=190,
-    placeholder="Anamnez, fizik muayene, tetkik ve taburculuk notunu buraya yapıştırın..."
+    placeholder="HBYS'den kopyaladığınız anamnez, fizik muayene ve taburculuk notunu buraya yapıştırın..."
 )
+
+# Metin Kutusunun Altına Şık Hak Sayacı (1/5, 2/5 vs.)
+max_limit = 5
+current_usage = st.session_state.usage_count
+
+st.markdown(f"""
+<div class="usage-tracker">
+    <span>Kullanılan Hak: <b>{current_usage} / {max_limit}</b></span>
+    <span>Aylık Ücretsiz Oturum</span>
+</div>
+""", unsafe_allow_html=True)
+
+# İlerleme Çubuğu (Progress Bar)
+st.progress(current_usage / max_limit)
+
+st.markdown("<br>", unsafe_allow_html=True)
 
 # Onay Kutusu
 cb = st.checkbox("Çıktıların bilgilendirme amaçlı olduğunu kabul ediyorum.")
@@ -204,9 +200,10 @@ if st.button("🔍 Medikolegal Risk Taramasını Başlat"):
         st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
     elif not epikriz_input.strip():
         st.error("Lütfen analiz edilecek bir epikriz metni girin.")
+    elif st.session_state.usage_count >= max_limit:
+        st.error("Ücretsiz kullanım limitinize ulaştınız (5/5).")
     else:
+        # Denetim başarılı olduğunda sayacı 1 artırır
+        st.session_state.usage_count += 1
         with st.spinner("Metin medikolegal açıdan taranıyor..."):
             st.success("Taratma Tamamlandı!")
-```eof
-
-GitHub üzerindeki `app.py` dosyanı bu kodla güncelleyip kaydedebilirsin. 1 dakika içinde Render güncellendiğinde çok daha ferah ve profesyonel bir görünüm seni karşılayacak!
