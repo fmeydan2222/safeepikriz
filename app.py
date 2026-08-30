@@ -8,11 +8,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Session State Hazırlığı (Sayaç için)
+# Session State
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 
-# 2. Özel CSS
+# 2. Özel CSS: ChatGPT & Gemini Mat Koyu Teması
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -21,66 +21,87 @@ st.markdown("""
         font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
+    /* ChatGPT Mat Koyu Arka Plan */
     .stApp {
-        background-color: #0f172a;
-        color: #f8fafc;
+        background-color: #131314;
+        color: #e3e3e3;
     }
 
+    /* Sol Menü (Sidebar) Mat Siyah */
     section[data-testid="stSidebar"] {
-        background-color: #1e293b;
-        border-right: 1px solid #334155;
+        background-color: #1e1e1f;
+        border-right: 1px solid #2e2e2f;
     }
 
+    /* Üst Sade Başlık */
     .header-container {
         padding: 0.5rem 0 1.2rem 0;
-        border-bottom: 1px solid #334155;
+        border-bottom: 1px solid #2e2e2f;
         margin-bottom: 1.5rem;
     }
     .brand-tag {
-        color: #38bdf8;
-        font-size: 0.8rem;
-        font-weight: 700;
+        color: #a8c7fa;
+        font-size: 0.78rem;
+        font-weight: 600;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.8px;
     }
     .main-title {
-        font-size: 2rem;
-        font-weight: 800;
+        font-size: 1.9rem;
+        font-weight: 700;
         color: #ffffff;
         margin: 0.2rem 0;
-        letter-spacing: -0.5px;
+        letter-spacing: -0.4px;
     }
     .main-subtitle {
-        font-size: 0.95rem;
-        color: #94a3b8;
+        font-size: 0.9rem;
+        color: #8e918f;
     }
 
+    /* Güvenlik Kutusu (Sadeleştirilmiş Mat Gri) */
     .security-badge {
-        background: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        color: #34d399;
+        background: #282a2c;
+        border: 1px solid #3c4043;
+        color: #c4c7c5;
         padding: 0.8rem;
         border-radius: 8px;
         font-size: 0.82rem;
-        line-height: 1.4;
+        line-height: 1.45;
         margin-bottom: 1rem;
     }
 
+    /* Buton Tasarımı (Gemini Tarzı Sade / Mat Buton) */
     .stButton>button {
         width: 100%;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        background-color: #1a73e8;
         color: #ffffff !important;
-        font-weight: 600;
-        font-size: 0.95rem;
-        padding: 0.65rem 1rem;
+        font-weight: 500;
+        font-size: 0.92rem;
+        padding: 0.6rem 1rem;
         border-radius: 8px;
         border: none;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
-        transform: translateY(-1px);
+        background-color: #1557b0;
+    }
+
+    /* Form Elemanları (Siyah / Koyu Kutu) */
+    .stTextArea textarea {
+        background-color: #1e1e1f !important;
+        border: 1px solid #3c4043 !important;
+        color: #e3e3e3 !important;
+        border-radius: 8px !important;
+    }
+    .stTextArea textarea:focus {
+        border-color: #a8c7fa !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #1e1e1f !important;
+        border-color: #3c4043 !important;
+        color: #e3e3e3 !important;
+        border-radius: 8px !important;
     }
 
     .usage-tracker {
@@ -88,7 +109,7 @@ st.markdown("""
         justify-content: space-between;
         align-items: center;
         font-size: 0.82rem;
-        color: #94a3b8;
+        color: #8e918f;
         margin-top: 0.4rem;
         margin-bottom: 0.8rem;
     }
