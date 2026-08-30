@@ -76,7 +76,12 @@ def send_otp(email: str) -> bool:
         st.error("Veritabanı bağlantısı yok, kod gönderilemedi.")
         return False
     try:
-        supabase.auth.sign_in_with_otp({"email": email, "options": {"should_create_user": True}})
+        supabase.auth.sign_in_with_otp({
+            "email": email, 
+            "options": {
+                "should_create_user": True
+            }
+        })
         return True
     except Exception as e:
         st.error(f"Kod gönderilirken bir sorun oluştu: {e}")
@@ -163,7 +168,6 @@ st.markdown("""
     }
     .stButton>button:hover { background-color: #383838 !important; border-color: #555555 !important; }
 
-    /* --- "Devam Et" birincil butonu: yüksek kontrast, beyaz zemin --- */
     div#devam-et-marker + div .stButton > button {
         background-color: #ffffff !important;
         color: #0f0f0f !important;
@@ -184,7 +188,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# GİRİŞ MODALI (st.dialog: arka planı otomatik karartan native pencere)
+# GİRİŞ MODALI
 # ---------------------------------------------------------
 @st.dialog("Oturum aç veya kaydol")
 def login_dialog():
@@ -215,7 +219,7 @@ def login_dialog():
 
         code_input = st.text_input(
             "Doğrulama Kodu",
-            placeholder="6 haneli kodu girin",
+            placeholder="Kodunuzu girin",
             label_visibility="collapsed"
         )
 
@@ -249,7 +253,7 @@ def login_dialog():
                 st.error("Lütfen geçerli bir e-posta adresi girin.")
 
 # ---------------------------------------------------------
-# SIDEBAR (giriş durumuna göre sade)
+# SIDEBAR
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("### 🛡️ SafeEpikriz AI")
@@ -270,7 +274,7 @@ with st.sidebar:
     st.caption("v1.2.0 • SafeEpikriz © 2026")
 
 # ---------------------------------------------------------
-# ANA ARAYÜZ (her zaman görünür — giriş yapılmamış olsa bile)
+# ANA ARAYÜZ
 # ---------------------------------------------------------
 st.markdown("""
 <div class="header-container">
@@ -316,7 +320,6 @@ st.markdown("<br>", unsafe_allow_html=True)
 
 if st.button("✦ Medikolegal Risk Taramasını Başlat"):
     if not is_logged_in:
-        # --- Giriş yapılmamışsa: arka planı karartan modal açılır ---
         login_dialog()
     elif not cb:
         st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
