@@ -146,10 +146,10 @@ st.markdown("""
 # SOL MENÜ (SIDEBAR)
 # ---------------------------------------------------------
 with st.sidebar:
-    try:
-        st.image("logo.png", use_container_width=True)
-    except Exception:
-        st.warning("`logo.png` dosyası okunamadı. Lütfen dosya adını kontrol edin.")
+    if os.path.exists("logo.png"):
+        st.image("logo.png", width=120)
+    else:
+        st.error("`logo.png` dosyası bulunamadı!")
     
     st.markdown("## SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
@@ -243,19 +243,16 @@ if st.button("✦ Medikolegal Risk Taramasını Başlat"):
     else:
         st.session_state.usage_count += 1
         
-        # 1. PII Anonimleştirme
         temiz_metin = anonimlestir(epikriz_input)
         
         with st.spinner("Metin anonimleştirildi. Gemini AI ile medikolegal riskler taranıyor..."):
             try:
-                # 2. Gemini API Çağrısı
                 prompt = f"Branş: {brans}\n\nAnonimleştirilmiş Hasta Notu:\n{temiz_metin}"
                 response = model.generate_content(prompt)
                 
                 st.success("Taratma Tamamlandı!")
                 st.info(f"🔒 **Güvenlik İkazı:** Metin yapay zekaya gönderilmeden önce yerel olarak anonimleştirilmiştir.")
                 
-                # 3. Sonuç Raporu
                 st.markdown("---")
                 st.markdown("### 📋 SafeEpikriz Denetim Raporu")
                 st.markdown(response.text)
