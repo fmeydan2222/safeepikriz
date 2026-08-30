@@ -3,6 +3,7 @@ import re
 import os
 import google.generativeai as genai
 from supabase import create_client, Client
+from authlib.integrations.requests_client import OAuth2Session
 
 # 1. Erken Sayfa Yapılandırması
 st.set_page_config(
@@ -12,10 +13,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# 2. Supabase ve Gemini Bağlantıları
+# 2. Supabase, Gemini ve OAuth Ayarları
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 API_KEY = os.getenv("GEMINI_API_KEY")
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+
+# Render canlı URL adresin (Google Cloud Console yönlendirme URI'si ile aynı olmalı)
+REDIRECT_URI = "https://safeepikriz.com.tr"
 
 supabase: Client = None
 if SUPABASE_URL and SUPABASE_KEY:
@@ -65,7 +71,27 @@ def anonimlestir(metin: str) -> str:
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
 
-# Style - Tek Parça Kusursuz ChatGPT Modal Tasarımı
+# URL'den gelen Google OAuth kodunu yakala
+query_params = st.query_params
+if "code" in query_params and not st.session_state.user_email and GOOGLE_CLIENT_ID:
+    code = query_params["code"]
+    try:
+        client = OAuth2Session(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, redirect_uri=REDIRECT_URI)
+        token = client.fetch_token(
+            'https://oauth2.googleapis.com/token',
+            code=code,
+            grant_type='authorization_code'
+        )
+        resp = client.get('https://www.googleapis.com/oauth2/v1/userinfo')
+        user_info = resp.json()
+        if "email" in user_info:
+            st.session_state.user_email = user_info["email"].lower()
+            st.query_params.clear()
+            st.rerun()
+    except Exception as e:
+        st.error(f"Google Giriş Hatası: {e}")
+
+# Style - Şık ChatGPT Modal Tasarımı
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -80,7 +106,6 @@ st.markdown("""
     .main-subtitle { font-size: 0.9rem; color: #8e918f; }
     .security-badge { background: #282a2c; border: 1px solid #3c4043; color: #c4c7c5; padding: 0.8rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.45; margin-bottom: 1rem; }
 
-    /* Tam Merkezdeki Tek Parça Kutu */
     .chatgpt-box {
         background-color: #212121;
         border: 1px solid #383838;
@@ -92,25 +117,9 @@ st.markdown("""
         margin: 2rem auto;
         text-align: center;
     }
-    .box-title {
-        font-size: 1.45rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin-bottom: 0.5rem;
-    }
-    .box-desc {
-        font-size: 0.84rem;
-        color: #b4b4b4;
-        margin-bottom: 1.8rem;
-        line-height: 1.4;
-    }
-    .divider {
-        font-size: 0.7rem;
-        color: #727272;
-        letter-spacing: 1.5px;
-        margin: 1.2rem 0;
-        font-weight: 600;
-    }
+    .box-title { font-size: 1.45rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; }
+    .box-desc { font-size: 0.84rem; color: #b4b4b4; margin-bottom: 1.8rem; line-height: 1.4; }
+    .divider { font-size: 0.7rem; color: #727272; letter-spacing: 1.5px; margin: 1.2rem 0; font-weight: 600; }
     .stButton>button {
         width: 100% !important;
         background-color: #2f2f2f !important;
@@ -121,10 +130,7 @@ st.markdown("""
         border-radius: 10px !important;
         border: 1px solid #424242 !important;
     }
-    .stButton>button:hover {
-        background-color: #383838 !important;
-        border-color: #555555 !important;
-    }
+    .stButton>button:hover { background-color: #383838 !important; border-color: #555555 !important; }
     .stTextInput input {
         background-color: #171717 !important;
         border: 1px solid #424242 !important;
@@ -154,7 +160,7 @@ with st.sidebar:
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.0.8 • SafeEpikriz © 2026")
+    st.caption("v1.0.9 • SafeEpikriz © 2026")
 
 # GİRİŞ YAPILMIŞSA ANA UYGULAMA
 if st.session_state.user_email:
@@ -221,24 +227,37 @@ if st.session_state.user_email:
                 except Exception as e:
                     st.error(f"Analiz sırasında bir hata oluştu: {e}")
 
-# GİRİŞ YAPILMAMIŞSA TEK PARÇA ORTADAKİ KUTU
+# GİRİŞ YAPILMAMIŞSA GERÇEK GOOGLE OAUTH / E-POSTA MODALI
 else:
     _, col_center, _ = st.columns([1, 1.3, 1])
     
     with col_center:
         st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
         
-        # Kutunun başlangıcı
         st.markdown("""
         <div class="chatgpt-box">
             <div class="box-title">Oturum aç veya kaydol</div>
             <div class="box-desc">Medikolegal risk denetim sistemine erişmek ve 5 ücretsiz hakkınızı tanımlamak için giriş yapın.</div>
         """, unsafe_allow_html=True)
         
-        if st.button("🌐 Google ile Devam Et"):
-            st.session_state.user_email = "hekim@gmail.com"
-            st.success("Giriş yapıldı!")
-            st.rerun()
+        # Gerçek Google OAuth Link Yönlendirmesi
+        if GOOGLE_CLIENT_ID:
+            google_auth_url = (
+                f"https://accounts.google.com/o/oauth2/v2/auth?"
+                f"client_id={GOOGLE_CLIENT_ID}&"
+                f"redirect_uri={REDIRECT_URI}&"
+                f"response_type=code&"
+                f"scope=openid%20email%20profile"
+            )
+            st.markdown(f"""
+            <a href="{google_auth_url}" target="_self" style="text-decoration: none;">
+                <div style="width: 100%; background-color: #2f2f2f; color: #ffffff; font-weight: 600; font-size: 0.9rem; padding: 0.65rem 1rem; border-radius: 10px; border: 1px solid #424242; text-align: center; margin-bottom: 0.5rem; display: block;">
+                    🌐 Google ile Devam Et
+                </div>
+            </a>
+            """, unsafe_allow_html=True)
+        else:
+            st.error("Google Client ID tanımlanmamış.")
             
         st.markdown("<div class='divider'>VEYA E-POSTA İLE</div>", unsafe_allow_html=True)
         
@@ -252,5 +271,4 @@ else:
             else:
                 st.error("Lütfen geçerli bir e-posta adresi girin.")
                 
-        # Kutunun kapanışı
         st.markdown("</div>", unsafe_allow_html=True)
