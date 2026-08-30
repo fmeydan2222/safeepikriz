@@ -20,7 +20,6 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
-# Render canlı URL adresin (Google Cloud Console yönlendirme URI'si ile aynı olmalı)
 REDIRECT_URI = "https://safeepikriz.com.tr"
 
 supabase: Client = None
@@ -32,8 +31,6 @@ if SUPABASE_URL and SUPABASE_KEY:
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
-    # DÜZELTME: gemini-1.5-flash-latest tamamen kapatıldı (404 hatası verir).
-    # Güncel, çalışan model:
     model = genai.GenerativeModel(
         model_name="gemini-3.5-flash-lite",
         system_instruction="""
@@ -74,6 +71,27 @@ def increment_user_usage(email: str, current_usage: int):
         except Exception:
             pass
 
+def send_otp(email: str) -> bool:
+    if not supabase:
+        st.error("Veritabanı bağlantısı yok, kod gönderilemedi.")
+        return False
+    try:
+        supabase.auth.sign_in_with_otp({"email": email, "options": {"should_create_user": True}})
+        return True
+    except Exception as e:
+        st.error(f"Kod gönderilirken bir sorun oluştu: {e}")
+        return False
+
+def verify_otp(email: str, token: str) -> bool:
+    if not supabase:
+        return False
+    try:
+        res = supabase.auth.verify_otp({"email": email, "token": token, "type": "email"})
+        return res.user is not None
+    except Exception:
+        st.error("Kod hatalı veya süresi dolmuş. Lütfen tekrar deneyin.")
+        return False
+
 def anonimlestir(metin: str) -> str:
     metin = re.sub(r'\b[1-9][0-9]{10}\b', '[TC_NO]', metin)
     metin = re.sub(r'(\+90|0)?\s*5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}', '[TEL_NO]', metin)
@@ -86,6 +104,8 @@ def anonimlestir(metin: str) -> str:
 
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
+if "otp_pending_email" not in st.session_state:
+    st.session_state.otp_pending_email = None
 
 # URL'den gelen Google OAuth kodunu yakala
 query_params = st.query_params
@@ -107,7 +127,6 @@ if "code" in query_params and not st.session_state.user_email and GOOGLE_CLIENT_
     except Exception as e:
         st.error(f"Google Giriş Hatası: {e}")
 
-# Google'ın resmi çok renkli "G" logosu (SVG)
 GOOGLE_LOGO_SVG = """<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 8px;">
   <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/>
   <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.6 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
@@ -115,7 +134,7 @@ GOOGLE_LOGO_SVG = """<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http
   <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C41.5 35.9 44 30.4 44 24c0-1.3-.1-2.7-.4-3.5z"/>
 </svg>"""
 
-# Style - Şık ChatGPT Modal Tasarımı
+# Style
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -130,22 +149,7 @@ st.markdown("""
     .main-subtitle { font-size: 0.9rem; color: #8e918f; }
     .security-badge { background: #282a2c; border: 1px solid #3c4043; color: #c4c7c5; padding: 0.8rem; border-radius: 8px; font-size: 0.82rem; line-height: 1.45; margin-bottom: 1rem; }
     .usage-tracker { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; color: #8e918f; margin-top: 0.4rem; margin-bottom: 0.8rem; }
-
-    /* --- ChatGPT tarzı: keskin köşeler (20px -> 12px) --- */
-    .chatgpt-box {
-        background-color: #212121;
-        border: 1px solid #383838;
-        padding: 2.5rem 2rem;
-        border-radius: 12px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        width: 100%;
-        max-width: 440px;
-        margin: 2rem auto;
-        text-align: center;
-    }
-    .box-title { font-size: 1.45rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; }
-    .box-desc { font-size: 0.84rem; color: #b4b4b4; margin-bottom: 1.8rem; line-height: 1.4; }
-    .divider { font-size: 0.7rem; color: #727272; letter-spacing: 1.5px; margin: 1.2rem 0; font-weight: 600; }
+    .divider { font-size: 0.7rem; color: #727272; letter-spacing: 1.5px; margin: 1.2rem 0; font-weight: 600; text-align: center; }
 
     .stButton>button {
         width: 100% !important;
@@ -159,7 +163,7 @@ st.markdown("""
     }
     .stButton>button:hover { background-color: #383838 !important; border-color: #555555 !important; }
 
-    /* --- "Devam Et" birincil butonu: ChatGPT'deki gibi yüksek kontrast, beyaz zemin --- */
+    /* --- "Devam Et" birincil butonu: yüksek kontrast, beyaz zemin --- */
     div#devam-et-marker + div .stButton > button {
         background-color: #ffffff !important;
         color: #0f0f0f !important;
@@ -179,7 +183,74 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# SIDEBAR
+# ---------------------------------------------------------
+# GİRİŞ MODALI (st.dialog: arka planı otomatik karartan native pencere)
+# ---------------------------------------------------------
+@st.dialog("Oturum aç veya kaydol")
+def login_dialog():
+    st.caption("Medikolegal risk denetim sistemine erişmek ve 5 ücretsiz hakkınızı tanımlamak için giriş yapın.")
+
+    if GOOGLE_CLIENT_ID:
+        google_auth_url = (
+            f"https://accounts.google.com/o/oauth2/v2/auth?"
+            f"client_id={GOOGLE_CLIENT_ID}&"
+            f"redirect_uri={REDIRECT_URI}&"
+            f"response_type=code&"
+            f"scope=openid%20email%20profile"
+        )
+        st.markdown(f"""
+        <a href="{google_auth_url}" target="_self" style="text-decoration: none;">
+            <div style="width: 100%; background-color: #ffffff; color: #1a1a1a; font-weight: 500; font-size: 0.9rem; padding: 0.65rem 1rem; border-radius: 10px; border: 1px solid #d0d0d0; text-align: center; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center;">
+                {GOOGLE_LOGO_SVG} Google ile Devam Et
+            </div>
+        </a>
+        """, unsafe_allow_html=True)
+    else:
+        st.error("Google Client ID tanımlanmamış.")
+
+    st.markdown("<div class='divider'>VEYA E-POSTA İLE</div>", unsafe_allow_html=True)
+
+    if st.session_state.otp_pending_email:
+        st.caption(f"📧 {st.session_state.otp_pending_email} adresine bir kod gönderdik.")
+
+        code_input = st.text_input(
+            "Doğrulama Kodu",
+            placeholder="6 haneli kodu girin",
+            label_visibility="collapsed"
+        )
+
+        st.markdown('<div id="devam-et-marker"></div>', unsafe_allow_html=True)
+
+        if st.button("Doğrula ve Giriş Yap"):
+            if verify_otp(st.session_state.otp_pending_email, code_input.strip()):
+                st.session_state.user_email = st.session_state.otp_pending_email
+                st.session_state.otp_pending_email = None
+                st.rerun()
+
+        if st.button("↩ Farklı bir e-posta kullan"):
+            st.session_state.otp_pending_email = None
+            st.rerun()
+    else:
+        email_input = st.text_input(
+            "E-posta adresiniz",
+            placeholder="dr.adsoyad@hastane.com",
+            label_visibility="collapsed"
+        )
+
+        st.markdown('<div id="devam-et-marker"></div>', unsafe_allow_html=True)
+
+        if st.button("Devam Et"):
+            cleaned_email = email_input.strip().lower()
+            if "@" in cleaned_email and "." in cleaned_email:
+                if send_otp(cleaned_email):
+                    st.session_state.otp_pending_email = cleaned_email
+                    st.rerun()
+            else:
+                st.error("Lütfen geçerli bir e-posta adresi girin.")
+
+# ---------------------------------------------------------
+# SIDEBAR (giriş durumuna göre sade)
+# ---------------------------------------------------------
 with st.sidebar:
     st.markdown("### 🛡️ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
@@ -189,129 +260,84 @@ with st.sidebar:
         if st.button("Çıkış Yap"):
             st.session_state.user_email = None
             st.rerun()
-    else:
-        st.info("🔐 Oturum kapalı.")
-    st.markdown("---")
+        st.markdown("---")
     st.markdown("""
     <div class="security-badge">
         <b>🛡️ Sıfır Veri Saklama:</b><br>
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.1.0 • SafeEpikriz © 2026")
+    st.caption("v1.2.0 • SafeEpikriz © 2026")
 
-# GİRİŞ YAPILMIŞSA ANA UYGULAMA
-if st.session_state.user_email:
-    st.markdown("""
-    <div class="header-container">
-        <span class="brand-tag">MEDİKOLEGAL RİSK DENETÇİSİ</span>
-        <h1 class="main-title">SafeEpikriz Risk Denetimi</h1>
-        <p class="main-subtitle">Epikriz ve taburculuk notlarınızdaki medikolegal riskleri ve eksiklikleri anında tespit edin.</p>
-    </div>
-    """, unsafe_allow_html=True)
+# ---------------------------------------------------------
+# ANA ARAYÜZ (her zaman görünür — giriş yapılmamış olsa bile)
+# ---------------------------------------------------------
+st.markdown("""
+<div class="header-container">
+    <span class="brand-tag">MEDİKOLEGAL RİSK DENETÇİSİ</span>
+    <h1 class="main-title">SafeEpikriz Risk Denetimi</h1>
+    <p class="main-subtitle">Epikriz ve taburculuk notlarınızdaki medikolegal riskleri ve eksiklikleri anında tespit edin.</p>
+</div>
+""", unsafe_allow_html=True)
 
-    user_email = st.session_state.user_email
-    current_usage = get_user_usage(user_email)
-    max_limit = 5
+max_limit = 5
+is_logged_in = st.session_state.user_email is not None
+current_usage = get_user_usage(st.session_state.user_email) if is_logged_in else 0
 
-    col_brans, col_sample = st.columns([2, 1])
-    with col_brans:
-        brans = st.selectbox("Tıbbi Branş Seçiniz:", ["Acil Servis", "Genel Cerrahi", "Dahiliye", "Kadın Doğum", "Ortopedi", "Diğer"])
-    with col_sample:
-        st.write("")
-        st.write("")
-        sample_clicked = st.button("📄 Örnek Vaka Yükle")
+col_brans, col_sample = st.columns([2, 1])
+with col_brans:
+    brans = st.selectbox("Tıbbi Branş Seçiniz:", ["Acil Servis", "Genel Cerrahi", "Dahiliye", "Kadın Doğum", "Ortopedi", "Diğer"])
+with col_sample:
+    st.write("")
+    st.write("")
+    sample_clicked = st.button("📄 Örnek Vaka Yükle")
 
-    default_text = ""
-    if sample_clicked:
-        default_text = "34 yaşında erkek hasta sağ alt kadranda başlayan ve 6 saattir devam eden şiddetli ağrı şikayetiyle başvurdu. Fizik muayenede sağ alt kadranda hassasiyet mevcut, rebound ve defans net değerlendirilmedi. Batın USG istendi. Analjezik verilerek poliklinik kontrolü önerisiyle taburcu edildi."
+default_text = ""
+if sample_clicked:
+    default_text = "34 yaşında erkek hasta sağ alt kadranda başlayan ve 6 saattir devam eden şiddetli ağrı şikayetiyle başvurdu. Fizik muayenede sağ alt kadranda hassasiyet mevcut, rebound ve defans net değerlendirilmedi. Batın USG istendi. Analjezik verilerek poliklinik kontrolü önerisiyle taburcu edildi."
 
-    epikriz_input = st.text_area("HBYS Ham Epikriz / Hasta Notu:", value=default_text, height=190, placeholder="HBYS'den kopyaladığınız metni buraya yapıştırın...")
+epikriz_input = st.text_area("HBYS Ham Epikriz / Hasta Notu:", value=default_text, height=190, placeholder="HBYS'den kopyaladığınız metni buraya yapıştırın...")
 
-    st.markdown(f"""
-    <div class="usage-tracker">
-        <span>Kullanılan Hak: <b>{current_usage} / {max_limit}</b></span>
-        <span>Aktif Oturum ({user_email})</span>
-    </div>
-    """, unsafe_allow_html=True)
+usage_label = f"{current_usage} / {max_limit}" if is_logged_in else f"- / {max_limit} (giriş gerekli)"
+session_label = st.session_state.user_email if is_logged_in else "Giriş yapılmadı"
 
-    st.progress(min(current_usage / max_limit, 1.0))
-    st.markdown("<br>", unsafe_allow_html=True)
+st.markdown(f"""
+<div class="usage-tracker">
+    <span>Kullanılan Hak: <b>{usage_label}</b></span>
+    <span>{session_label}</span>
+</div>
+""", unsafe_allow_html=True)
 
-    cb = st.checkbox("Üretilen analizlerin karar destek amaçlı olduğunu, nihai tıbbi ve hukuki sorumluluğun tarafıma ait olduğunu ve KVKK/Aydınlatma koşullarını kabul ediyorum.")
-    st.markdown("<br>", unsafe_allow_html=True)
+st.progress(min(current_usage / max_limit, 1.0) if is_logged_in else 0.0)
+st.markdown("<br>", unsafe_allow_html=True)
 
-    if st.button("✦ Medikolegal Risk Taramasını Başlat"):
-        if not cb:
-            st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
-        elif not epikriz_input.strip():
-            st.error("Lütfen analiz edilecek bir epikriz metni girin.")
-        elif current_usage >= max_limit:
-            st.error("Ücretsiz kullanım limitinize ulaştınız (5/5). Sayfayı yenileseniz dahi bu hesap için hakkınız dolmuştur.")
-        elif not model:
-            st.error("Gemini API anahtarı tanımlanmamış.")
-        else:
-            temiz_metin = anonimlestir(epikriz_input)
-            with st.spinner("Medikolegal riskler taranıyor..."):
-                try:
-                    prompt = f"Branş: {brans}\n\nKlinik Hasta Notu:\n{temiz_metin}"
-                    response = model.generate_content(prompt, request_options={"timeout": 30})
-                    increment_user_usage(user_email, current_usage)
-                    st.success("Taratma Tamamlandı!")
-                    st.markdown("---")
-                    st.markdown("### 📋 SafeEpikriz Denetim Raporu")
-                    st.markdown(response.text)
-                    st.rerun()
-                except Exception as e:
-                    st.error("Analiz sırasında bir sorun oluştu. Lütfen birkaç saniye sonra tekrar deneyin.")
-                    print(f"[SafeEpikriz HATA] {str(e)}")
+cb = st.checkbox("Üretilen analizlerin karar destek amaçlı olduğunu, nihai tıbbi ve hukuki sorumluluğun tarafıma ait olduğunu ve KVKK/Aydınlatma koşullarını kabul ediyorum.")
+st.markdown("<br>", unsafe_allow_html=True)
 
-# GİRİŞ YAPILMAMIŞSA GERÇEK GOOGLE OAUTH / E-POSTA MODALI
-else:
-    _, col_center, _ = st.columns([1, 1.3, 1])
-
-    with col_center:
-        st.markdown("<div style='height: 4vh;'></div>", unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="chatgpt-box">
-            <div class="box-title">Oturum aç veya kaydol</div>
-            <div class="box-desc">Medikolegal risk denetim sistemine erişmek ve 5 ücretsiz hakkınızı tanımlamak için giriş yapın.</div>
-        """, unsafe_allow_html=True)
-
-        # Gerçek Google OAuth Link Yönlendirmesi (artık gerçek çok renkli Google logosuyla)
-        if GOOGLE_CLIENT_ID:
-            google_auth_url = (
-                f"https://accounts.google.com/o/oauth2/v2/auth?"
-                f"client_id={GOOGLE_CLIENT_ID}&"
-                f"redirect_uri={REDIRECT_URI}&"
-                f"response_type=code&"
-                f"scope=openid%20email%20profile"
-            )
-            st.markdown(f"""
-            <a href="{google_auth_url}" target="_self" style="text-decoration: none;">
-                <div style="width: 100%; background-color: #ffffff; color: #1a1a1a; font-weight: 500; font-size: 0.9rem; padding: 0.65rem 1rem; border-radius: 10px; border: 1px solid #d0d0d0; text-align: center; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center;">
-                    {GOOGLE_LOGO_SVG} Google ile Devam Et
-                </div>
-            </a>
-            """, unsafe_allow_html=True)
-        else:
-            st.error("Google Client ID tanımlanmamış.")
-
-        st.markdown("<div class='divider'>VEYA E-POSTA İLE</div>", unsafe_allow_html=True)
-
-        email_input = st.text_input("E-posta adresiniz", placeholder="dr.adsoyad@hastane.com", label_visibility="collapsed")
-
-        # Bu görünmez işaretçi, altındaki "Devam Et" butonunu CSS ile hedefleyip
-        # ChatGPT'deki gibi beyaz/yüksek kontrastlı yapmamızı sağlıyor.
-        st.markdown('<div id="devam-et-marker"></div>', unsafe_allow_html=True)
-
-        if st.button("Devam Et"):
-            if "@" in email_input and "." in email_input:
-                st.session_state.user_email = email_input.strip().lower()
-                st.success("Giriş yapıldı!")
+if st.button("✦ Medikolegal Risk Taramasını Başlat"):
+    if not is_logged_in:
+        # --- Giriş yapılmamışsa: arka planı karartan modal açılır ---
+        login_dialog()
+    elif not cb:
+        st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
+    elif not epikriz_input.strip():
+        st.error("Lütfen analiz edilecek bir epikriz metni girin.")
+    elif current_usage >= max_limit:
+        st.error("Ücretsiz kullanım limitinize ulaştınız (5/5). Bu hesap için hakkınız dolmuştur.")
+    elif not model:
+        st.error("Gemini API anahtarı tanımlanmamış.")
+    else:
+        temiz_metin = anonimlestir(epikriz_input)
+        with st.spinner("Medikolegal riskler taranıyor..."):
+            try:
+                prompt = f"Branş: {brans}\n\nKlinik Hasta Notu:\n{temiz_metin}"
+                response = model.generate_content(prompt, request_options={"timeout": 30})
+                increment_user_usage(st.session_state.user_email, current_usage)
+                st.success("Taratma Tamamlandı!")
+                st.markdown("---")
+                st.markdown("### 📋 SafeEpikriz Denetim Raporu")
+                st.markdown(response.text)
                 st.rerun()
-            else:
-                st.error("Lütfen geçerli bir e-posta adresi girin.")
-
-        st.markdown("</div>", unsafe_allow_html=True)
+            except Exception as e:
+                st.error("Analiz sırasında bir sorun oluştu. Lütfen birkaç saniye sonra tekrar deneyin.")
+                print(f"[SafeEpikriz HATA] {str(e)}")
