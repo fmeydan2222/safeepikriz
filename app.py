@@ -109,10 +109,14 @@ def anonimlestir(metin: str) -> str:
 
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
+if "user_avatar" not in st.session_state:
+    st.session_state.user_avatar = None
 if "otp_pending_email" not in st.session_state:
     st.session_state.otp_pending_email = None
+if "show_billing" not in st.session_state:
+    st.session_state.show_billing = False
 
-# URL'den gelen Google OAuth kodunu yakala
+# URL'den gelen Google OAuth kodunu yakala (Avatar dahil)
 query_params = st.query_params
 if "code" in query_params and not st.session_state.user_email and GOOGLE_CLIENT_ID:
     code = query_params["code"]
@@ -127,6 +131,7 @@ if "code" in query_params and not st.session_state.user_email and GOOGLE_CLIENT_
         user_info = resp.json()
         if "email" in user_info:
             st.session_state.user_email = user_info["email"].lower()
+            st.session_state.user_avatar = user_info.get("picture", None)
             st.query_params.clear()
             st.rerun()
     except Exception as e:
@@ -228,6 +233,7 @@ def login_dialog():
         if st.button("Doğrula ve Giriş Yap"):
             if verify_otp(st.session_state.otp_pending_email, code_input.strip()):
                 st.session_state.user_email = st.session_state.otp_pending_email
+                st.session_state.user_avatar = None # E-posta ile girişte varsayılan avatar yok
                 st.session_state.otp_pending_email = None
                 st.rerun()
 
@@ -253,25 +259,59 @@ def login_dialog():
                 st.error("Lütfen geçerli bir e-posta adresi girin.")
 
 # ---------------------------------------------------------
-# SIDEBAR
+# ABONELİK YÖNETİMİ MODALI
+# ---------------------------------------------------------
+@st.dialog("Aboneliği Yönet")
+def billing_dialog():
+    st.markdown("### 💎 Mevcut Plan: Ücretsiz Deneme")
+    st.info("Hesabınız üzerinden 5 ücretsiz medikolegal analiz hakkı tanımlanmıştır.")
+    st.markdown("Daha fazla analiz hakkı ve sınırsız kurumsal erişim için yakında açılacak olan **Pro Plan**'a geçiş yapabilirsiniz.")
+    st.markdown("---")
+    if st.button("Kapat"):
+        st.rerun()
+
+# ---------------------------------------------------------
+# SIDEBAR (Gemini Tarzı Profil Kartı ve Menü)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("### 🛡️ SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
     st.markdown("---")
+    
     if st.session_state.user_email:
-        st.success(f"Oturum Açık:\n{st.session_state.user_email}")
+        # Profil Fotoğrafı ve E-posta Görsel Alanı
+        avatar_html = ""
+        if st.session_state.user_avatar:
+            avatar_html = f'<img src="{st.session_state.user_avatar}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; margin-right: 10px; vertical-align: middle;">'
+        else:
+            avatar_html = '<div style="width: 32px; height: 32px; border-radius: 50%; background-color: #4f46e5; color: white; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; vertical-align: middle;">' + st.session_state.user_email[0].upper() + '</div>'
+
+        st.markdown(f"""
+        <div style="background-color: #252528; padding: 10px; border-radius: 10px; display: flex; align-items: center; margin-bottom: 10px;">
+            {avatar_html}
+            <div style="overflow: hidden; text-overflow: ellipsis; font-size: 0.85rem; color: #e3e3e3;">
+                <b>{st.session_state.user_email}</b>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        if st.button("💳 Aboneliği Yönet"):
+            billing_dialog()
+
         if st.button("Çıkış Yap"):
             st.session_state.user_email = None
+            st.session_state.user_avatar = None
             st.rerun()
+            
         st.markdown("---")
+    
     st.markdown("""
     <div class="security-badge">
         <b>🛡️ Sıfır Veri Saklama:</b><br>
         Klinik notlar sunucularda saklanmaz, analiz sonrasında silinir.
     </div>
     """, unsafe_allow_html=True)
-    st.caption("v1.2.0 • SafeEpikriz © 2026")
+    st.caption("v1.3.0 • SafeEpikriz © 2026")
 
 # ---------------------------------------------------------
 # ANA ARAYÜZ
@@ -328,7 +368,7 @@ if st.button("✦ Medikolegal Risk Taramasını Başlat"):
     elif current_usage >= max_limit:
         st.error("Ücretsiz kullanım limitinize ulaştınız (5/5). Bu hesap için hakkınız dolmuştur.")
     elif not model:
-        st.error("Gemini API anahtarı tanımlanmamış.")
+        st.error("Gemini tarzı model yapılandırmasında eksiklik var.")
     else:
         temiz_metin = anonimlestir(epikriz_input)
         with st.spinner("Medikolegal riskler taranıyor..."):
@@ -343,4 +383,3 @@ if st.button("✦ Medikolegal Risk Taramasını Başlat"):
                 st.rerun()
             except Exception as e:
                 st.error("Analiz sırasında bir sorun oluştu. Lütfen birkaç saniye sonra tekrar deneyin.")
-                print(f"[SafeEpikriz HATA] {str(e)}")
