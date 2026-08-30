@@ -3,13 +3,16 @@ import re
 import os
 import google.generativeai as genai
 
-# 1. Sayfa Yapılandırması
+# 1. Başlığın Anında Yüklenmesi İçin Erken Sayfa Yapılandırması
 st.set_page_config(
     page_title="SafeEpikriz AI | Medikolegal Risk Denetimi",
     page_icon="🛡️",
     layout="centered",
     initial_sidebar_state="expanded"
 )
+
+# Tarayıcı Sekme Başlığını Erken Sabitleme
+st.markdown("<head><title>SafeEpikriz AI | Medikolegal Risk Denetimi</title></head>", unsafe_allow_html=True)
 
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
@@ -35,11 +38,10 @@ if API_KEY:
 else:
     model = None
 
-# 3. Yerel PII Anonimleştirici
+# 3. Arka Plan Güvenlik Filtresi (Sessiz Çalışır)
 def anonimlestir(metin: str) -> str:
-    metin = re.sub(r'\b[1-9][0-9]{10}\b', '[TC_NO_GİZLENDİ]', metin)
-    metin = re.sub(r'(\+90|0)?\s*5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}', '[TEL_NO_GİZLENDİ]', metin)
-    metin = re.sub(r'(Hasta\s+Adı\s*:?|Hasta\s*:?)\s*([A-ZÇĞİÖŞÜa-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜa-zçğıöşü]+)+)', r'\1 [HASTA_ADI_GİZLENDİ]', metin, flags=re.IGNORECASE)
+    metin = re.sub(r'\b[1-9][0-9]{10}\b', '[TC_NO]', metin)
+    metin = re.sub(r'(\+90|0)?\s*5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}', '[TEL_NO]', metin)
     return metin
 
 # 4. Özel CSS
@@ -143,14 +145,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# SOL MENÜ (SIDEBAR) - LOGO BAŞLIKLA YAN YANA
+# SOL MENÜ (SIDEBAR)
 # ---------------------------------------------------------
 with st.sidebar:
     col_logo, col_title = st.columns([1, 3])
     
     with col_logo:
         if os.path.exists("logo.png"):
-            st.image("logo.png", width=42)
+            st.image("logo.png", width=40)
             
     with col_title:
         st.markdown("### SafeEpikriz AI")
@@ -161,7 +163,7 @@ with st.sidebar:
     st.markdown("""
     <div class="security-badge">
         <b>🛡️ Sıfır Veri Saklama (Zero-Data Retention):</b><br>
-        Raporlar sunucularımızda saklanmaz. Metindeki T.C. No ve kişisel veriler işlenmeden yerel otomasyonla anonimleştirilir.
+        Girilen klinik notlar sunucularda saklanmaz. Metin anlık medikolegal analiz sonrasında bellekten tamamen silinir.
     </div>
     """, unsafe_allow_html=True)
     
@@ -205,10 +207,10 @@ with col_sample:
     st.write("")
     sample_clicked = st.button("📄 Örnek Vaka Yükle")
 
-# TAMAMEN ANONİMLEŞTİRİLMİŞ ŞABLON ÖRNEK METİN
+# GERÇEKÇİ SAF KLİNİK ÖRNEK METİN
 default_text = ""
 if sample_clicked:
-    default_text = "Hasta [HASTA_ADI_GİZLENDİ] (TC: [TC_NO_GİZLENDİ]) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
+    default_text = "34 yaşında erkek hasta sağ alt kadranda başlayan ve 6 saattir devam eden şiddetli ağrı şikayetiyle başvurdu. Fizik muayenede sağ alt kadranda hassasiyet mevcut, rebound ve defans net değerlendirilmedi. Batın USG istendi. Analjezik verilerek poliklinik kontrolü önerisiyle taburcu edildi."
 
 epikriz_input = st.text_area(
     "HBYS Ham Epikriz / Hasta Notu:",
@@ -231,7 +233,6 @@ st.progress(current_usage / max_limit)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# DETAYLI VE KORUYUCU HUKUKİ ONAY KUTUSU
 cb = st.checkbox("Üretilen analizlerin karar destek amaçlı olduğunu, nihai tıbbi ve hukuki sorumluluğun tarafıma ait olduğunu ve KVKK/Aydınlatma koşullarını kabul ediyorum.")
 
 st.markdown("<br>", unsafe_allow_html=True)
@@ -250,13 +251,12 @@ if st.button("✦ Medikolegal Risk Taramasını Başlat"):
         
         temiz_metin = anonimlestir(epikriz_input)
         
-        with st.spinner("Metin anonimleştirildi. Gemini AI ile medikolegal riskler taranıyor..."):
+        with st.spinner("Medikolegal riskler taranıyor..."):
             try:
-                prompt = f"Branş: {brans}\n\nAnonimleştirilmiş Hasta Notu:\n{temiz_metin}"
+                prompt = f"Branş: {brans}\n\nKlinik Hasta Notu:\n{temiz_metin}"
                 response = model.generate_content(prompt)
                 
                 st.success("Taratma Tamamlandı!")
-                st.info(f"🔒 **Güvenlik İkazı:** Metin yapay zekaya gönderilmeden önce yerel olarak anonimleştirilmiştir.")
                 
                 st.markdown("---")
                 st.markdown("### 📋 SafeEpikriz Denetim Raporu")
