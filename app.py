@@ -142,7 +142,7 @@ GOOGLE_LOGO_SVG = """<svg width="18" height="18" viewBox="0 0 48 48" xmlns="http
   <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.4 5.4C41.5 35.9 44 30.4 44 24c0-1.3-.1-2.7-.4-3.5z"/>
 </svg>"""
 
-# Style - Gemini Tarzı Minimalist Simgesel Kenar Çubuğu
+# Style
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -151,7 +151,6 @@ st.markdown("""
     }
     .stApp { background-color: #131314; color: #e3e3e3; }
     
-    /* Streamlit varsayılan koca sidebar'ını gizle */
     section[data-testid="stSidebar"] { display: none !important; }
     
     .header-container { padding: 0.5rem 0 1.2rem 0; border-bottom: 1px solid #2e2e2f; margin-bottom: 1.5rem; }
@@ -218,34 +217,34 @@ def feedback_dialog():
         else:
             st.error("Lütfen boş bırakmayın.")
 
-# SOL KENARDAKİ GEMİNİ TARZI MİNİMALİST SİMGE ÇUBUĞU (HTML/CSS ile sabitlenmiş)
+# SOL KENARDAKİ MİNİMALİST SİMGE ÇUBUĞU
 avatar_src = st.session_state.user_avatar if st.session_state.user_avatar else ""
-user_initial = st.session_state.user_email[0].upper() if st.session_state.user_email else "U"
+user_email_val = st.session_state.user_email if st.session_state.user_email else "Misafir"
+user_initial = user_email_val[0].upper()
 
-avatar_html = f"""
+if avatar_src:
+    avatar_element = f'<img src="{avatar_src}" title="{user_email_val}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; cursor: pointer;" />'
+else:
+    avatar_element = f'<div title="{user_email_val}" style="width: 32px; height: 32px; border-radius: 50%; background-color: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; cursor: pointer;">{user_initial}</div>'
+
+sidebar_html = f"""
 <div style="position: fixed; top: 0; left: 0; width: 64px; height: 100vh; background-color: #1e1e1f; border-right: 1px solid #2e2e2f; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 16px 0; z-index: 999;">
-    <!-- Üst Simge -->
     <div style="display: flex; flex-direction: column; gap: 16px; align-items: center;">
         <span title="SafeEpikriz AI" style="font-size: 1.3rem; cursor: pointer;">🛡️</span>
     </div>
-    
-    <!-- Alt Simgeler (Profil ve Ayarlar) -->
     <div style="display: flex; flex-direction: column; gap: 14px; align-items: center;">
-        {'<img src="' + avatar_src + '" title="' + st.session_state.user_email + '" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; cursor: pointer;" />' if st.session_state.user_avatar else '<div title="' + (st.session_state.user_email or 'Misafir') + '" style="width: 32px; height: 32px; border-radius: 50%; background-color: #4f46e5; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85rem; cursor: pointer;">' + user_initial + '</div>'}
+        {avatar_element}
     </div>
 </div>
-""", unsafe_allow_html=True)
+"""
+st.markdown(sidebar_html, unsafe_allow_html=True)
 
-st.markdown(avatar_html, unsafe_allow_html=True)
-
-# İçeriği sola taşma yapmasından korumak için soldan boşluk bırakıyoruz
 st.markdown("""
 <style>
     .stMain { padding-left: 3rem !important; }
 </style>
 """, unsafe_allow_html=True)
 
-# Oturum açıkken sağ üstte veya pratik bir alanda hızlı menü tetikleyicisi
 if st.session_state.user_email:
     col_top_space, col_menu = st.columns([10, 1])
     with col_menu:
@@ -272,7 +271,6 @@ st.markdown("""
 
 is_logged_in = st.session_state.user_email is not None
 
-# GİRİŞ YAPILMAMIŞSA: ORTADAKİ CHATGPT KUTUSU
 if not is_logged_in:
     _, col_center, _ = st.columns([1, 1.4, 1])
     with col_center:
@@ -333,7 +331,6 @@ if not is_logged_in:
 
         st.markdown("</div>", unsafe_allow_html=True)
 
-# GİRİŞ YAPILMIŞSA: NORMAL ÇALIŞMA ALANI
 else:
     max_limit = 5
     current_usage = get_user_usage(st.session_state.user_email)
