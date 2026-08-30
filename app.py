@@ -1,153 +1,212 @@
 import streamlit as st
 
-# Sayfa Yapılandırması (Geniş mod ve şık başlık)
+# 1. Sayfa Yapılandırması
 st.set_page_config(
     page_title="SafeEpikriz AI | Medikolegal Risk Denetimi",
     page_icon="⚕️",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="centered",
+    initial_sidebar_state="expanded"
 )
 
-# Özel Modern CSS
+# 2. Özel CSS: Minimalist & Modern Premium SaaS Teması
 st.markdown("""
 <style>
-    /* Ana Arka Plan */
-    .stApp {
-        background-color: #0f172a;
-        color: #f8fafc;
-    }
-    
-    /* Üst Banner */
-    .hero-container {
-        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a8a 100%);
-        padding: 2rem;
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        text-align: center;
-        margin-bottom: 2rem;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
-    }
-    .hero-title {
-        font-size: 2.4rem;
-        font-weight: 800;
-        color: #ffffff;
-        margin-bottom: 0.5rem;
-    }
-    .hero-subtitle {
-        font-size: 1.1rem;
-        color: #a5b4fc;
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+    html, body, [class*="css"], .stMarkdown, p, h1, h2, h3, div {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
     }
 
-    /* Bilgi Kartları GRID */
-    .info-card {
-        background: #1e293b;
-        border: 1px solid #334155;
-        border-radius: 12px;
-        padding: 1.25rem;
+    /* Ana Arka Plan - Temiz Slate Koyu Teması */
+    .stApp {
+        background-color: #0d1117;
+        color: #e6edf3;
+    }
+
+    /* Sol Menü (Sidebar) */
+    section[data-testid="stSidebar"] {
+        background-color: #161b22;
+        border-right: 1px solid #30363d;
+    }
+
+    /* Minimalist Sade Başlık (Kutu Yok) */
+    .header-container {
+        padding: 0.5rem 0 1.5rem 0;
+        border-bottom: 1px solid #21262d;
+        margin-bottom: 1.5rem;
+    }
+    .brand-badge {
+        display: inline-block;
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        border: 1px solid rgba(56, 189, 248, 0.2);
+    }
+    .main-title {
+        font-size: 1.9rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+    .main-subtitle {
+        font-size: 0.92rem;
+        color: #8b949e;
+        margin-top: 6px;
+    }
+
+    /* Sol Menü Kartları */
+    .sidebar-card {
+        background: #21262d;
+        border: 1px solid #30363d;
+        padding: 1rem;
+        border-radius: 10px;
         margin-bottom: 1rem;
     }
-    .security-card {
-        background: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        color: #34d399;
+    .sidebar-badge {
+        background: rgba(46, 160, 67, 0.1);
+        border: 1px solid rgba(46, 160, 67, 0.25);
+        color: #3fb950;
+        padding: 0.85rem;
+        border-radius: 8px;
+        font-size: 0.8rem;
+        line-height: 1.45;
+        margin-bottom: 1rem;
     }
 
-    /* Buton Stili */
+    /* Buton Tasarımı - Zümrüt / Mavi İnce Gradient */
     .stButton>button {
         width: 100%;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        color: white !important;
-        font-weight: 700;
-        font-size: 1.1rem;
-        padding: 0.8rem 1.5rem;
-        border-radius: 10px;
-        border: none;
-        box-shadow: 0 4px 14px 0 rgba(37, 99, 235, 0.39);
+        background: #238636;
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 0.95rem;
+        padding: 0.65rem 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(240, 246, 252, 0.1);
         transition: all 0.2s ease;
     }
     .stButton>button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px 0 rgba(37, 99, 235, 0.55);
+        background: #2ea043;
+        border-color: #8b949e;
+    }
+
+    /* Form Elemanları Özelleştirme */
+    .stTextArea textarea {
+        background-color: #161b22 !important;
+        border: 1px solid #30363d !important;
+        color: #f0f6fc !important;
+        border-radius: 8px !important;
+    }
+    .stTextArea textarea:focus {
+        border-color: #58a6ff !important;
+    }
+
+    .stSelectbox div[data-baseweb="select"] {
+        background-color: #161b22 !important;
+        border-color: #30363d !important;
+        border-radius: 8px !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 1. HERO HEADER
+# ---------------------------------------------------------
+# SOL MENÜ (SIDEBAR)
+# ---------------------------------------------------------
+with st.sidebar:
+    st.markdown("### ⚕️ SafeEpikriz AI")
+    st.caption("Medikolegal Risk Denetim Paneli")
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Kullanım Limiti Göstergesi
+    st.markdown("""
+    <div class="sidebar-card" style="text-align: center;">
+        <small style="color: #8b949e;">Kalan Ücretsiz Denetim</small>
+        <h2 style="margin: 0.2rem 0; color: #58a6ff; font-size: 1.7rem; font-weight: 700;">5 / 5</h2>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Veri Güvenliği Garantisi
+    st.markdown("""
+    <div class="sidebar-badge">
+        <b>🔒 KVKK & Veri Güvenliği:</b><br>
+        Girilen veriler sunucularda kaydedilmez. T.C. No ve kişisel tanımlayıcılar yerel otomasyonla süzülür.
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Hızlı Adımlar
+    st.markdown("#### 📌 Kullanım Adımları")
+    st.caption("1. İlgili tıbbi branşı seçin.")
+    st.caption("2. HBYS'den hasta notunu yapıştırın.")
+    st.caption("3. Denetim butonuna tıklayarak riskleri görün.")
+    
+    st.markdown("---")
+    st.caption("SafeEpikriz AI v1.0 • 2026")
+
+# ---------------------------------------------------------
+# ANA EKRAN
+# ---------------------------------------------------------
+
+# Sade ve Kutusuz Başlık Alanı
 st.markdown("""
-<div class="hero-container">
-    <div class="hero-title">⚕️ SafeEpikriz AI</div>
-    <div class="hero-subtitle">Hekimler ve Sağlık Hukukçuları İçin Medikolegal Risk Denetçisi ve Güvenlik Kalkanı</div>
+<div class="header-container">
+    <span class="brand-badge">PROTOTEK / SAĞLIK HUKUKU</span>
+    <h1 class="main-title">SafeEpikriz Risk Denetçisi</h1>
+    <p class="main-subtitle">Epikriz ve taburculuk notlarındaki medikolegal riskleri ve malpraktis açıklarını tespit edin.</p>
 </div>
 """, unsafe_allow_html=True)
 
-# 2. ÜST METRİK & GÜVENLİK BARI
-col_sec, col_limit = st.columns([3, 1])
-
-with col_sec:
-    st.markdown("""
-    <div class="security-card">
-        <b>🔒 KVKK & Veri Güvenliği Garantisi:</b> Metin içindeki T.C. No, İsim ve İletişim bilgileri sunucuya/AI modeline ulaşmadan yerel otomasyonla temizlenir. Sıfır veri saklama ilkesiyle çalışır.
-    </div>
-    """, unsafe_allow_html=True)
-
-with col_limit:
-    st.markdown("""
-    <div class="info-card" style="text-align: center; padding: 0.8rem;">
-        <small style="color: #94a3b8;">Kalan Ücretsiz Hak</small>
-        <h3 style="margin:0; color: #38bdf8;">5 / 5</h3>
-    </div>
-    """, unsafe_allow_html=True)
+# Bilgilendirme Akordiyonu
+with st.expander("ℹ️ Sistem Hakkında & Sorumluluk Reddi"):
+    st.write("SafeEpikriz, TTB etik ilkeleri ve sağlık hukuku içtihatları doğrultusunda epikriz metinlerindeki eksiklikleri değerlendirir. Çıktılar karar destek amaçlı olup nihai hukuki/tıbbi sorumluluk hekime aittir.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 3. BİLGİLENDİRME AKORDİYONLARI
-with st.expander("💡 Neden Genel Yapay Zeka Değil de SafeEpikriz?"):
-    st.write("SafeEpikriz, genel sohbet botlarının aksine tıbbi malpraktis içtihatları ve TTB etik kuralları çerçevesinde epikriz metinlerindeki medikolegal eksiklikleri tespit etmek için özel olarak yapılandırılmıştır.")
-
-with st.expander("📜 KVKK Aydınlatma Metni & Sorumluluk Reddi"):
-    st.write("Bu araç bir hukuki danışmanlık hizmeti sunmaz. Üretilen çıktılar bilgilendirme amaçlı olup nihai hukuki ve tıbbi sorumluluk uygulayıcı hekime aittir.")
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# 4. GİRDİ FORMU
+# Branş Seçimi ve Örnek Yükleme
 col_brans, col_sample = st.columns([2, 1])
 
 with col_brans:
     brans = st.selectbox(
-        "Branşınızı Seçin:",
+        "Tıbbi Branş Seçiniz:",
         ["Acil Servis", "Genel Cerrahi", "Dahiliye", "Kadın Doğum", "Ortopedi", "Diğer"]
     )
 
 with col_sample:
-    st.write("") 
     st.write("")
-    sample_clicked = st.button("🧪 Örnek Vaka Notu Yükle")
+    st.write("")
+    sample_clicked = st.button("🧪 Örnek Vaka Yükle")
 
-# Örnek vaka metni hazırlığı
+# Örnek Metin
 default_text = ""
 if sample_clicked:
-    default_text = "Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda ağrı ile geldi. Rebound ve defans mevcut değil. Ağrı kesici yapılarak taburcu edildi."
+    default_text = "Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
 
+# Metin Alanı
 epikriz_input = st.text_area(
-    "HBYS'den Kopyaladığınız Ham Notu Buraya Yapıştırın:",
+    "HBYS Ham Epikriz / Hasta Notu:",
     value=default_text,
-    height=180,
-    placeholder="Örn: Hastanın anamnezi, fizik muayene bulguları, uygulanan tedaviler ve taburculuk notu..."
+    height=190,
+    placeholder="Anamnez, fizik muayene, tetkik ve taburculuk notunu buraya yapıştırın..."
 )
 
 # Onay Kutusu
-cb = st.checkbox("SafeEpikriz'in bir hukuki danışmanlık hizmeti olmadığını, çıktıların bilgilendirme amaçlı olduğunu kabul ediyorum.")
+cb = st.checkbox("Çıktıların bilgilendirme amaçlı olduğunu kabul ediyorum.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Analiz Butonu
-if st.button("🔍 Medikolegal Risk Denetimini Başlat"):
+# Denetim Butonu
+if st.button("🔍 Medikolegal Risk Taramasını Başlat"):
     if not cb:
-        st.warning("Lütfen devam etmek için sorumluluk reddi beyanını onaylayın.")
+        st.warning("Devam etmek için lütfen sorumluluk reddi beyanını onaylayın.")
     elif not epikriz_input.strip():
-        st.error("Lütfen analiz edilecek bir metin girin.")
+        st.error("Lütfen analiz edilecek bir epikriz metni girin.")
     else:
-        with st.spinner("Medikolegal riskler taranıyor..."):
-            st.success("Denetim Tamamlandı!")
+        with st.spinner("Metin medikolegal açıdan taranıyor..."):
+            st.success("Taratma Tamamlandı!")
+```eof
+
+GitHub üzerindeki `app.py` dosyanı bu kodla güncelleyip kaydedebilirsin. 1 dakika içinde Render güncellendiğinde çok daha ferah ve profesyonel bir görünüm seni karşılayacak!
