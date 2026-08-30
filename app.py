@@ -221,12 +221,6 @@ with st.sidebar:
     with st.expander("◈ Neden SafeEpikriz?"):
         st.write("Genel yapay zeka araçlarının aksine SafeEpikriz; TTB etik ilkeleri ve sağlık hukuku emsal kararları doğrultusunda epikriz raporlarındaki eksiklikleri ve malpraktis risklerini tespit etmek için özel olarak eğitilmiştir.")
 
-    with st.expander("📄 KVKK & Aydınlatma Metni"):
-        st.write("SafeEpikriz, KVKK ve GDPR uyumlu sıfır veri retention mimarisiyle çalışır. Kullanıcı tarafından girilen tıbbi veriler anlık analiz sonrası bellekten tamamen silinir.")
-
-    with st.expander("⚡ Sorumluluk Reddi"):
-        st.write("Bu platform bir hukuki danışmanlık hizmeti sunmamaktadır. Üretilen analiz raporları karar destek amaçlı olup nihai hukuki ve tıbbi sorumluluk uygulayıcı hekime aittir.")
-
     with st.expander("ⓘ Hakkında"):
         st.write("SafeEpikriz AI, hekimler ve sağlık hukukçularının malpraktis risklerini en aza indirmek için geliştirilmiş bağımsız bir medikolegal denetim aracıdır.")
 
