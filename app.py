@@ -1,6 +1,7 @@
 import streamlit as st
+import re
 
-# 1. Sayfa Yapılandırması
+# 1. Sayfa Yapılandırması (ChatGPT/Gemini Odaklı Tasarım)
 st.set_page_config(
     page_title="SafeEpikriz AI | Medikolegal Risk Denetimi",
     page_icon="🛡️",
@@ -8,11 +9,21 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Session State
+# Session State (Kullanım Sayacı)
 if 'usage_count' not in st.session_state:
     st.session_state.usage_count = 0
 
-# 2. Özel CSS: ChatGPT & Gemini Tarzı Mat Koyu ve Monokrom Teması
+# 2. Yerel PII Anonimleştirici (Gemini'ye Gitmeden Önce Veri Temizliği)
+def anonimlestir(metin: str) -> str:
+    # T.C. Kimlik No (11 Haneli)
+    metin = re.sub(r'\b[1-9][0-9]{10}\b', '[TC_NO_GİZLENDİ]', metin)
+    # Telefon Numaraları
+    metin = re.sub(r'(\+90|0)?\s*5\d{2}[\s-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}', '[TEL_NO_GİZLENDİ]', metin)
+    # İsim Maskeleme (Hasta: Ahmet Yılmaz -> Hasta: [HASTA_ADI])
+    metin = re.sub(r'(Hasta\s+Adı\s*:?|Hasta\s*:?)\s*([A-ZÇĞİÖŞÜa-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜa-zçğıöşü]+)+)', r'\1 [HASTA_ADI_GİZLENDİ]', metin, flags=re.IGNORECASE)
+    return metin
+
+# 3. Özel CSS: ChatGPT & Gemini Tarzı Mat Koyu ve Monokrom Teması
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
@@ -58,7 +69,7 @@ st.markdown("""
         color: #8e918f;
     }
 
-    /* Güvenlik Kutusu (Mat Gri & Siyah-Beyaz İkon) */
+    /* Güvenlik Kutusu */
     .security-badge {
         background: #282a2c;
         border: 1px solid #3c4043;
@@ -70,7 +81,7 @@ st.markdown("""
         margin-bottom: 1rem;
     }
 
-    /* Siyah-Beyaz / Mat Sade Butonlar */
+    /* Monokrom Butonlar */
     .stButton>button {
         width: 100%;
         background-color: #2e2e2f;
@@ -119,7 +130,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# SOL MENÜ (SIDEBAR) - Monokrom İkonlar
+# SOL MENÜ (SIDEBAR)
 # ---------------------------------------------------------
 with st.sidebar:
     st.markdown("## ✦ SafeEpikriz AI")
@@ -149,7 +160,7 @@ with st.sidebar:
     st.caption("v1.0.0 • SafeEpikriz © 2026")
 
 # ---------------------------------------------------------
-# ANA EKRAN - Monokrom Tasarım
+# ANA EKRAN
 # ---------------------------------------------------------
 
 st.markdown("""
@@ -211,5 +222,12 @@ if st.button("✦ Medikolegal Risk Taramasını Başlat"):
         st.error("Ücretsiz kullanım limitinize ulaştınız (5/5).")
     else:
         st.session_state.usage_count += 1
-        with st.spinner("Metin medikolegal açıdan taranıyor..."):
+        
+        # 1. Otomatik Anonimleştirme
+        temiz_metin = anonimlestir(epikriz_input)
+        
+        with st.spinner("Metin anonimleştiriliyor ve medikolegal riskler taranıyor..."):
             st.success("Taratma Tamamlandı!")
+            
+            # Anonimleşti Uyarısı
+            st.info(f"🔒 **Güvenlik Notu:** Metniniz yerel olarak anonimleştirildi. (İşlenen hali: `{temiz_metin[:60]}...`)")
