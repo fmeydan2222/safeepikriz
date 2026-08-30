@@ -147,9 +147,8 @@ st.markdown("""
 # ---------------------------------------------------------
 with st.sidebar:
     if os.path.exists("logo.png"):
-        st.image("logo.png", width=120)
-    else:
-        st.error("`logo.png` dosyası bulunamadı!")
+        # Logoyu küçültüp daha kibar bir orana getirdik (width=80)
+        st.image("logo.png", width=80)
     
     st.markdown("## SafeEpikriz AI")
     st.caption("Medikolegal Risk Denetim Platformu")
@@ -202,9 +201,10 @@ with col_sample:
     st.write("")
     sample_clicked = st.button("📄 Örnek Vaka Yükle")
 
+# PII Gizlenmiş Şablon Örnek Metin
 default_text = ""
 if sample_clicked:
-    default_text = "Hasta Ahmet Yılmaz (TC: 10293847561) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
+    default_text = "Hasta [HASTA_ADI_GİZLENDİ] (TC: [TC_NO_GİZLENDİ]) sağ alt kadranda şiddetli ağrı şikayetiyle başvurdu. Rebound ve defans net değerlendirilmedi. Analjezik yapılarak taburcu edildi."
 
 epikriz_input = st.text_area(
     "HBYS Ham Epikriz / Hasta Notu:",
@@ -227,7 +227,8 @@ st.progress(current_usage / max_limit)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-cb = st.checkbox("Çıktıların bilgilendirme amaçlı olduğunu kabul ediyorum.")
+# Hukuki Korumayı Artıran Detaylı Onay Kutusu
+cb = st.checkbox("Üretilen analizlerin karar destek amaçlı olduğunu, nihai tıbbi/hukuki sorumluluğun tarafıma ait olduğunu ve KVKK/Aydınlatma koşullarını kabul ediyorum.")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
